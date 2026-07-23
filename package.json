@@ -1,0 +1,17 @@
+{
+  "name": "tiv-songs-platform",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "concurrently \"npm:dev:*\"",
+    "dev:web": "npm --workspace @tiv-songs/web run dev",
+    "dev:api": "npm --workspace @tiv-songs/api run dev",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces",
+    "db:generate": "npm --workspace @tiv-songs/api run db:generate",
+    "db:migrate": "npm --workspace @tiv-songs/api run db:migrate"
+  },
+  "devDependencies": {"concurrently": "^9.2.1"},
+  "engines": {"node": ">=20"}
+}
