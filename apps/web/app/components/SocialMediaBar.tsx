@@ -1,0 +1,47 @@
+"use client";
+
+import {AnimatePresence,motion} from "framer-motion";
+import {usePathname} from "next/navigation";
+import {useEffect,useState} from "react";
+import styles from "./SocialMediaBar.module.css";
+
+type Settings={utilityDock:{position:"right"|"left";visibility:"entire"|"homepage";liveStatus:"online"|"offline";reportUrl:string;searchEnabled:boolean;shareEnabled:boolean}};
+type SearchResult={id:string;title?:string;stageName?:string;name?:string;slug?:string};
+type SearchData=Record<string,SearchResult[]>;
+
+function Icon({name}:{name:"menu"|"search"|"top"|"share"|"report"|"bell"|"close"}){
+  const paths={menu:"M4 7h16M4 12h16M4 17h16",search:"m21 21-4.3-4.3M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z",top:"m18 15-6-6-6 6",share:"M12 16V3m0 0L7 8m5-5 5 5M5 13v7h14v-7",report:"M12 9v4m0 4h.01M10.3 3.7 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.7a2 2 0 0 0-3.4 0Z",bell:"M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12h4",close:"M6 6l12 12M18 6 6 18"}[name];
+  return <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={paths}/></svg>;
+}
+
+export default function SocialMediaBar(){
+  const pathname=usePathname();const [settings,setSettings]=useState<Settings|null>(null);const [expanded,setExpanded]=useState(false);const [searchOpen,setSearchOpen]=useState(false);const [shareOpen,setShareOpen]=useState(false);const [showTop,setShowTop]=useState(false);const [notifications,setNotifications]=useState(0);
+  useEffect(()=>{const load=()=>fetch("/api/cms/settings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(setSettings).catch(()=>undefined);const loadNotifications=()=>fetch("/api/account/notifications",{credentials:"include"}).then(r=>r.ok?r.json():null).then(data=>setNotifications(data?.unread||0)).catch(()=>undefined);void load();void loadNotifications();const scroll=()=>setShowTop(scrollY>300);addEventListener("scroll",scroll,{passive:true});const timer=setInterval(loadNotifications,30_000);return()=>{removeEventListener("scroll",scroll);clearInterval(timer)}},[]);
+  if(pathname.startsWith("/admin")||(settings?.utilityDock.visibility==="homepage"&&pathname!=="/"))return null;
+  const dock=settings?.utilityDock||{position:"right",visibility:"entire",liveStatus:"online",reportUrl:"mailto:support@tivsongs.com",searchEnabled:true,shareEnabled:true};
+  const share=()=>setShareOpen(true);
+  return <><motion.aside className={`${styles.dock} ${dock.position==="left"?styles.left:""}`} aria-label="Website utility dock" initial={{opacity:0,x:dock.position==="left"?-18:18}} animate={{opacity:1,x:0}}>
+    <button className={styles.mobileToggle} aria-label={expanded?"Close utility dock":"Open utility dock"} aria-expanded={expanded} onClick={()=>setExpanded(value=>!value)}><Icon name={expanded?"close":"menu"}/></button>
+    <div className={`${styles.tools} ${expanded?styles.open:""}`}>
+      <div className={styles.status} title={dock.liveStatus==="online"?"Tiv Songs is online":"Tiv Songs is offline"}><i className={dock.liveStatus==="online"?styles.online:""}/><span>{dock.liveStatus}</span></div>
+      {dock.searchEnabled&&<button onClick={()=>setSearchOpen(true)} aria-label="Search Tiv Songs" data-tooltip="Search Tiv Songs"><Icon name="search"/></button>}
+      <button className={styles.notification} onClick={()=>location.assign("/account")} aria-label={`${notifications} unread notifications`} data-tooltip="Notifications"><Icon name="bell"/>{notifications>0&&<b>{notifications>9?"9+":notifications}</b>}</button>
+      {dock.shareEnabled&&<button onClick={share} aria-label="Share Tiv Songs" data-tooltip="Share website"><Icon name="share"/></button>}
+      <a href={dock.reportUrl||"mailto:support@tivsongs.com"} aria-label="Report an issue" data-tooltip="Report issue"><Icon name="report"/></a>
+      <AnimatePresence>{showTop&&<motion.button initial={{opacity:0,scale:.7}} animate={{opacity:1,scale:1}} exit={{opacity:0,scale:.7}} onClick={()=>scrollTo({top:0,behavior:"smooth"})} aria-label="Scroll to top" data-tooltip="Scroll to top"><Icon name="top"/></motion.button>}</AnimatePresence>
+    </div>
+  </motion.aside>
+  <SearchOverlay open={searchOpen} close={()=>setSearchOpen(false)}/>
+  <ShareDialog open={shareOpen} close={()=>setShareOpen(false)}/>
+  </>;
+}
+
+function SearchOverlay({open,close}:{open:boolean;close:()=>void}){
+  const [query,setQuery]=useState("");const [results,setResults]=useState<SearchData>({});const [loading,setLoading]=useState(false);const [suggestions,setSuggestions]=useState<Array<{keyword:string;type:string}>>([]);
+  useEffect(()=>{if(query.trim().length<2){setResults({});return}setLoading(true);const timer=setTimeout(()=>fetch(`/api/search?q=${encodeURIComponent(query)}`).then(r=>r.ok?r.json():{}).then(data=>{setResults(data);setLoading(false);const recent=JSON.parse(localStorage.getItem("tiv-recent-searches")||"[]") as string[];localStorage.setItem("tiv-recent-searches",JSON.stringify([query,...recent.filter(x=>x!==query)].slice(0,8)))}).catch(()=>setLoading(false)),220);return()=>clearTimeout(timer)},[query]);
+  useEffect(()=>{if(!open)return;const key=(event:KeyboardEvent)=>{if(event.key==="Escape")close()};addEventListener("keydown",key);return()=>removeEventListener("keydown",key)},[open,close]);
+  useEffect(()=>{if(open)fetch("/api/search/suggestions").then(r=>r.ok?r.json():[]).then(setSuggestions).catch(()=>undefined)},[open]);
+  const recent=typeof localStorage==="undefined"?[]:JSON.parse(localStorage.getItem("tiv-recent-searches")||"[]") as string[];
+  return <AnimatePresence>{open&&<motion.div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Global search" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}><motion.div className={styles.searchPanel} initial={{y:-25,opacity:0}} animate={{y:0,opacity:1}}><header><Icon name="search"/><input autoFocus value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search songs, artists, videos, community and heritage…" aria-label="Search the entire website"/><button onClick={close} aria-label="Close search"><Icon name="close"/></button></header><div className={styles.results}>{!query&&<><section><h3>Trending searches</h3>{suggestions.map(item=><button key={item.keyword} onClick={()=>setQuery(item.keyword)}>{item.keyword}</button>)}</section><section><h3>Recent searches</h3>{recent.map(item=><button key={item} onClick={()=>setQuery(item)}>{item}</button>)}</section></>}{loading&&<p>Searching…</p>}{Object.entries(results).map(([group,items])=>items.length?<section key={group}><h3>{group}</h3>{items.map(item=><a key={item.id} href={item.slug?`/?q=${encodeURIComponent(item.title||item.stageName||item.name||"")}`:"#"}>{item.title||item.stageName||item.name}</a>)}</section>:null)}{query.length>=2&&!loading&&!Object.values(results).some(x=>x.length)&&<p>No matching content found.</p>}</div></motion.div></motion.div>}</AnimatePresence>;
+}
+function ShareDialog({open,close}:{open:boolean;close:()=>void}){const url=typeof location==="undefined"?"":location.href,title=typeof document==="undefined"?"Tiv Songs":document.title,encoded=encodeURIComponent(url),message=encodeURIComponent(`${title}\n\n${url}`);const track=(platform:string)=>void fetch("/api/analytics",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({event:`share_${platform}`,entityType:"page",entityId:location.pathname,metadata:{url}}),keepalive:true});const copy=async(platform="copy")=>{await navigator.clipboard.writeText(url);track(platform);window.dispatchEvent(new CustomEvent("tiv:notice",{detail:"Link copied successfully."}))};const native=async()=>{if(navigator.share){await navigator.share({title,url}).then(()=>track("native")).catch(()=>undefined)}else await copy("native")};return <AnimatePresence>{open&&<motion.div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Share Tiv Songs" initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}}><div className={styles.sharePanel}><header><h2>Share Tiv Songs</h2><button onClick={close} aria-label="Close"><Icon name="close"/></button></header><button onClick={()=>void copy()}>Copy link</button><a onClick={()=>track("facebook")} target="_blank" rel="noopener noreferrer" href={`https://www.facebook.com/sharer/sharer.php?u=${encoded}`}>Facebook</a><a onClick={()=>track("whatsapp")} target="_blank" rel="noopener noreferrer" href={`https://wa.me/?text=${message}`}>WhatsApp</a><button onClick={()=>void copy("tiktok")}>TikTok · Copy link</button><a onClick={()=>track("x")} target="_blank" rel="noopener noreferrer" href={`https://x.com/intent/post?text=${message}`}>X (Twitter)</a><a onClick={()=>track("telegram")} target="_blank" rel="noopener noreferrer" href={`https://t.me/share/url?url=${encoded}&text=${encodeURIComponent(title)}`}>Telegram</a><a onClick={()=>track("email")} href={`mailto:?subject=${encodeURIComponent(title)}&body=${message}`}>Email</a><button onClick={()=>void native()}>Share with device</button></div></motion.div>}</AnimatePresence>}

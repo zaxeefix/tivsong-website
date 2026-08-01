@@ -1,5 +1,6 @@
 node_modules/
 .next/
+.next-dev/
 dist/
 coverage/
 .env
@@ -8,3 +9,6 @@ coverage/
 *.tsbuildinfo
 uploads/*
 !uploads/.gitkeep
+apps/api/uploads/*
+apps/api/generated/
+apps/api/prisma/dev.db*
