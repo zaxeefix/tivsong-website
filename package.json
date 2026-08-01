@@ -1,7 +1,9 @@
 {
   "name": "tiv-songs-platform",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
     "dev": "concurrently \"npm:dev:*\"",
     "dev:web": "npm --workspace @tiv-songs/web run dev",
@@ -10,8 +12,26 @@
     "test": "npm run test --workspaces --if-present",
     "lint": "npm run lint --workspaces",
     "db:generate": "npm --workspace @tiv-songs/api run db:generate",
-    "db:migrate": "npm --workspace @tiv-songs/api run db:migrate"
+    "db:migrate": "npm --workspace @tiv-songs/api run db:migrate",
+    "db:deploy": "npm --workspace @tiv-songs/api run db:deploy",
+    "db:local:setup": "npm --workspace @tiv-songs/api run db:local:setup"
   },
-  "devDependencies": {"concurrently": "^9.2.1"},
-  "engines": {"node": ">=20"}
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "overrides": {
+    "postcss": "8.5.18",
+    "sharp": "0.35.0",
+    "next": {
+      "postcss": "8.5.18",
+      "sharp": "0.35.0"
+    }
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "postcss": "8.5.18",
+    "sharp": "0.35.0"
+  }
 }

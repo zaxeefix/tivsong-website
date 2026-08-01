@@ -1,0 +1,569 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/local-client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  BANNED
+  INACTIVE
+  DELETED
+}
+
+enum MediaStatus {
+  DRAFT
+  PROCESSING
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+}
+
+model User {
+  id              String        @id @default(cuid())
+  email           String        @unique
+  username        String        @unique
+  passwordHash    String?
+  displayName     String
+  avatarUrl       String?
+  phoneNumber     String?
+  country         String?
+  state           String?
+  accountType     String        @default("individual")
+  locale          String        @default("en")
+  status          UserStatus    @default(PENDING)
+  emailVerifiedAt DateTime?
+  lastLoginAt     DateTime?
+  lastActivityAt  DateTime?
+  deletedAt       DateTime?
+  suspendedAt     DateTime?
+  suspendedUntil  DateTime?
+  suspensionReason String?
+  bannedAt        DateTime?
+  banReason       String?
+  bannedBy        String?
+  forcePasswordReset Boolean    @default(false)
+  roles           UserRole[]
+  artist          Artist?
+  sessions        Session[]
+  playlists       Playlist[]
+  likes           Like[]
+  comments        Comment[]
+  history         History[]
+  notifications   Notification[]
+  uploads         Upload[]
+  communityPosts  CommunityPost[]
+  payments        Payment[]
+  subscriptions   Subscription[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id    String           @id @default(cuid())
+  key   String           @unique
+  roles RolePermission[]
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model Session {
+  id               String   @id @default(cuid())
+  userId           String
+  refreshTokenHash String   @unique
+  expiresAt        DateTime
+  revokedAt        DateTime?
+  userAgent        String?
+  ipAddress        String?
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model Artist {
+  id         String    @id @default(cuid())
+  userId     String    @unique
+  stageName  String    @unique
+  bio        String?
+  imageUrl   String?
+  verifiedAt DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  albums     Album[]
+  songs      Song[]
+  videos     Video[]
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model Album {
+  id          String    @id @default(cuid())
+  artistId    String
+  title       String
+  artworkUrl  String?
+  releaseDate DateTime?
+  artist      Artist    @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  songs       Song[]
+  createdAt   DateTime  @default(now())
+
+  @@index([artistId, releaseDate])
+}
+
+model Genre {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+  songs Song[]
+}
+
+model Language {
+  id    String @id @default(cuid())
+  code  String @unique
+  name  String @unique
+  songs Song[]
+}
+
+model Category {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  slug   String  @unique
+  songs  Song[]
+  videos Video[]
+}
+
+model Song {
+  id            String      @id @default(cuid())
+  artistId      String
+  albumId       String?
+  genreId       String?
+  languageId    String?
+  categoryId    String?
+  title         String
+  slug          String      @unique
+  description   String?
+  lyrics        String?
+  artworkUrl    String?
+  audioUrl      String?
+  audioMediumUrl String?
+  audioLowUrl   String?
+  hlsUrl        String?
+  duration      Int?
+  status        MediaStatus @default(DRAFT)
+  playCount     BigInt      @default(0)
+  downloadCount BigInt      @default(0)
+  publishedAt   DateTime?
+  artist        Artist      @relation(fields: [artistId], references: [id])
+  album         Album?      @relation(fields: [albumId], references: [id], onDelete: SetNull)
+  genre         Genre?      @relation(fields: [genreId], references: [id], onDelete: SetNull)
+  language      Language?   @relation(fields: [languageId], references: [id], onDelete: SetNull)
+  category      Category?   @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  likes         Like[]
+  comments      Comment[]
+  playlistSongs PlaylistSong[]
+  history       History[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([status, publishedAt])
+  @@index([artistId, status])
+}
+
+model Video {
+  id           String      @id @default(cuid())
+  artistId     String
+  categoryId   String?
+  title        String
+  slug         String      @unique
+  description  String?
+  thumbnailUrl String?
+  videoUrl     String?
+  hlsUrl       String?
+  duration     Int?
+  status       MediaStatus @default(DRAFT)
+  viewCount    BigInt      @default(0)
+  artist       Artist      @relation(fields: [artistId], references: [id])
+  category     Category?   @relation(fields: [categoryId], references: [id])
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model CommunityPost {
+  id          String      @id @default(cuid())
+  userId      String
+  title       String
+  description String
+  country     String
+  region      String?
+  city        String?
+  eventDate   DateTime
+  isUpcoming  Boolean     @default(false)
+  mediaType   String
+  mediaUrl    String
+  status      MediaStatus @default(PENDING_REVIEW)
+  publishedAt DateTime?
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([status, eventDate])
+  @@index([userId, createdAt])
+}
+
+model Playlist {
+  id          String         @id @default(cuid())
+  userId      String
+  title       String
+  description String?
+  artworkUrl  String?
+  isPublic    Boolean        @default(true)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  songs       PlaylistSong[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+}
+
+model PlaylistSong {
+  playlistId String
+  songId     String
+  position   Int
+  addedAt    DateTime @default(now())
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  song       Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@id([playlistId, songId])
+  @@unique([playlistId, position])
+}
+
+model Like {
+  userId    String
+  songId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@id([userId, songId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  songId    String
+  body      String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([songId, createdAt])
+}
+
+model History {
+  id              String   @id @default(cuid())
+  userId          String
+  songId          String
+  progressSeconds Int      @default(0)
+  playedAt        DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  song            Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+
+  @@index([userId, playedAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  readAt    DateTime?
+  data      Json?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt, createdAt])
+}
+
+model Upload {
+  id         String      @id @default(cuid())
+  userId     String
+  kind       String
+  provider   String
+  storageKey String
+  mimeType   String
+  sizeBytes  BigInt
+  checksum   String?
+  status     MediaStatus @default(PROCESSING)
+  user       User        @relation(fields: [userId], references: [id])
+  createdAt  DateTime    @default(now())
+}
+
+model TorTiv {
+  id          String   @id @default(cuid())
+  ordinal     Int      @unique
+  name        String
+  reignStart  DateTime
+  reignEnd    DateTime?
+  portraitUrl String?
+  biography   String
+  sourceUrl   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model HistoryArticle {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  excerpt     String?
+  body        String
+  coverUrl    String?
+  locale      String   @default("en")
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  userId    String
+  provider  String
+  reference String   @unique
+  amount    Int
+  currency  String   @default("NGN")
+  status    String   @default("PENDING")
+  metadata  Json?
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String
+  plan      String
+  status    String
+  startsAt  DateTime
+  endsAt    DateTime
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([userId, status])
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model CmsEntry {
+  id String @id @default(cuid())
+  kind String
+  slug String
+  title String
+  subtitle String?
+  excerpt String?
+  body String?
+  status String @default("DRAFT")
+  featured Boolean @default(false)
+  pinned Boolean @default(false)
+  sortOrder Int @default(0)
+  publishAt DateTime?
+  archiveAt DateTime?
+  imageUrl String?
+  videoUrl String?
+  buttonText String?
+  buttonUrl String?
+  metadata Json?
+  seo Json?
+  createdBy String?
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([kind, slug])
+  @@index([kind, status, sortOrder])
+}
+
+model CmsComment {
+  id String @id @default(cuid())
+  userId String
+  targetType String
+  targetId String
+  parentId String?
+  body String
+  status String @default("PENDING")
+  pinned Boolean @default(false)
+  likeCount Int @default(0)
+  reportCount Int @default(0)
+  spamScore Float @default(0)
+  moderatedBy String?
+  moderatedAt DateTime?
+  parent CmsComment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies CmsComment[] @relation("CommentReplies")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([targetType, targetId, status, createdAt])
+}
+
+model MediaAsset {
+  id String @id @default(cuid())
+  name String
+  folder String @default("/")
+  kind String
+  mimeType String
+  url String
+  storageKey String?
+  sizeBytes BigInt @default(0)
+  altText String?
+  uploadedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([folder, kind, createdAt])
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+  actor String
+  role String
+  action String
+  entity String?
+  entityId String?
+  summary String
+  ipAddress String?
+  userAgent String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  @@index([createdAt])
+  @@index([actor, createdAt])
+}
+
+model AnalyticsEvent {
+  id String @id @default(cuid())
+  event String
+  userId String?
+  entityType String?
+  entityId String?
+  country String?
+  device String?
+  browser String?
+  searchTerm String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  @@index([event, createdAt])
+  @@index([entityType, entityId, createdAt])
+}
+
+model SearchRule {
+  id String @id @default(cuid())
+  keyword String @unique
+  type String
+  weight Int @default(0)
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([type, active, weight])
+}
+
+model EmailTemplate {
+  id String @id @default(cuid())
+  key String @unique
+  name String
+  subject String
+  html String
+  text String?
+  active Boolean @default(true)
+  updatedBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LoginAttempt {
+  id String @id @default(cuid())
+  userId String?
+  email String
+  successful Boolean
+  ipAddress String?
+  userAgent String?
+  device String?
+  browser String?
+  country String?
+  failure String?
+  createdAt DateTime @default(now())
+  @@index([email, createdAt])
+  @@index([userId, createdAt])
+  @@index([successful, createdAt])
+}
+
+model UserWarning {
+  id String @id @default(cuid())
+  userId String
+  level String
+  reason String
+  issuedBy String
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  resolvedAt DateTime?
+  @@index([userId, active, createdAt])
+}
+
+model AdminNote {
+  id String @id @default(cuid())
+  userId String
+  body String
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId, createdAt])
+}
+
+model ContentReport {
+  id String @id @default(cuid())
+  reporterId String
+  targetType String
+  targetId String
+  reason String
+  details String?
+  status String @default("OPEN")
+  assignedTo String?
+  resolution String?
+  resolvedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status, createdAt])
+  @@index([targetType, targetId, status])
+  @@index([reporterId, createdAt])
+}

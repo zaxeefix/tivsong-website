@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="/assets/theme.js"></script>
+<title>Tiv Songs — Where Real Music Is</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600;9..144,700&family=Manrope:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site-footer.css">
+<style>
+  :root{
+    --black:#111111;
+    --white:#FFFFFF;
+    --gold:#C89B3C;
+    --tiv-red:#8B1E24;
+    --earth:#6B4423;
+
+    --bg:#0B0B0C;
+    --bg-raised:#151517;
+    --bg-card:#1B1B1E;
+    --text:#F4F1EC;
+    --text-dim:#A8A39A;
+    --hairline:rgba(244,241,236,0.10);
+    --stripe-a:#111111;
+    --stripe-b:#F4F1EC;
+  }
+  html[data-theme="light"]{
+    --bg:#F7F4EE;
+    --bg-raised:#FFFFFF;
+    --bg-card:#FFFFFF;
+    --text:#17130F;
+    --text-dim:#5B5347;
+    --hairline:rgba(17,17,17,0.10);
+    --stripe-a:#17130F;
+    --stripe-b:#F7F4EE;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Manrope', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    transition:background .4s ease, color .4s ease;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,h4{font-family:'Fraunces', serif; font-weight:600; letter-spacing:-0.01em;}
+  a{color:inherit; text-decoration:none;}
+  .mono{font-family:'Space Mono', monospace;}
+  .wrap{max-width:1280px; margin:0 auto; padding:0 32px;}
+  @media(max-width:640px){.wrap{padding:0 20px;}}
+
+  /* Anger stripe motif — the recurring signature */
+  .stripes{
+    height:6px;
+    background:repeating-linear-gradient(90deg, var(--stripe-a) 0 10px, var(--stripe-b) 10px 16px, var(--stripe-a) 16px 26px, var(--gold) 26px 30px);
+    opacity:.9;
+  }
+  .stripes-v{
+    width:5px;
+    background:repeating-linear-gradient(180deg, var(--black) 0 8px, var(--white) 8px 13px, var(--black) 13px 21px);
+    border-radius:3px;
+  }
+
+  /* NAV */
+  header{
+    position:sticky; top:0; z-index:50;
+    backdrop-filter:blur(16px) saturate(140%);
+    background:color-mix(in srgb, var(--bg) 78%, transparent);
+    border-bottom:1px solid var(--hairline);
+  }
+  .nav-inner{display:flex; align-items:center; justify-content:space-between; height:76px; gap:24px;}
+  .brand{display:flex; align-items:center; gap:12px; font-family:'Fraunces',serif; font-weight:700; font-size:1.25rem;}
+  .brand-mark{
+    width:34px; height:34px; border-radius:8px;
+    background:linear-gradient(155deg, var(--tiv-red), var(--earth));
+    display:flex; align-items:center; justify-content:center;
+    position:relative; overflow:hidden; flex-shrink:0;
+  }
+  .brand-mark::after{
+    content:""; position:absolute; inset:0;
+    background:repeating-linear-gradient(45deg, transparent 0 5px, rgba(255,255,255,.15) 5px 7px);
+  }
+  .brand-mark span{color:var(--gold); font-weight:800; font-size:1.05rem; z-index:1;}
+  nav.links{display:flex; gap:28px; font-size:.92rem; font-weight:600;}
+  nav.links a{color:var(--text-dim); transition:color .2s; position:relative; padding:4px 0;}
+  nav.links a:hover, nav.links a.active{color:var(--text);}
+  nav.links a.active::after{
+    content:""; position:absolute; left:0; right:0; bottom:-6px; height:2px; background:var(--gold);
+  }
+  .nav-actions{display:flex; align-items:center; gap:14px;}
+  .account-btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center;padding:0 17px;border-radius:10px;background:var(--text);color:var(--bg)!important;font-size:.75rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;}
+  .account-menu-wrap{position:relative}.account-btn{width:44px;padding:0;border-radius:50%}.account-btn svg{width:20px;height:20px}.account-dropdown{display:none;position:absolute;right:0;top:calc(100% + 10px);z-index:80;min-width:170px;padding:8px;border:1px solid var(--hairline);border-radius:14px;background:var(--bg-raised);box-shadow:0 18px 50px rgba(0,0,0,.35)}.account-dropdown.open{display:grid}.account-dropdown a{min-height:44px;display:flex;align-items:center;padding:0 13px;border-radius:9px;font-weight:800}.account-dropdown a:hover,.account-dropdown a:focus-visible{background:var(--bg-card);outline:none}
+  .icon-btn{
+    width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    border:1px solid var(--hairline); background:transparent; color:var(--text); cursor:pointer; transition:.2s;
+  }
+  .icon-btn:hover{border-color:var(--gold); color:var(--gold);}
+  .icon-btn svg{display:block;margin:auto}
+  .btn{
+    padding:11px 22px; border-radius:999px; font-weight:700; font-size:.88rem; cursor:pointer; border:none;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn-gold{background:var(--gold); color:#1a1204; box-shadow:0 4px 20px rgba(200,155,60,.25);}
+  .btn-ghost{background:transparent; color:var(--text); border:1px solid var(--hairline);}
+  .btn-outline-white{background:transparent; border:1.5px solid var(--white); color:var(--white);}
+  .hide-mobile{display:flex;}
+  .burger{display:none;}
+  @media(max-width:960px){
+    nav.links{display:none;}
+    .hide-mobile{display:none;}
+    .burger{display:flex;}
+  }
+  @media(max-width:640px){
+    .nav-actions{gap:7px}
+    .burger{display:none}
+    .account-btn{width:44px;padding:0;font-size:0}
+  }
+
+  /* HERO */
+  .hero{
+    position:relative; min-height:92vh; display:flex; align-items:flex-end;
+    background:
+      radial-gradient(ellipse 80% 60% at 70% 20%, rgba(139,30,36,.35), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 15% 85%, rgba(107,68,35,.4), transparent 60%),
+      linear-gradient(180deg, #0b0b0c 0%, #17120f 55%, #0b0b0c 100%);
+    overflow:hidden;
+    border-bottom:1px solid var(--hairline);
+  }
+  .hero::before{
+    content:""; position:absolute; inset:0;
+    background-image: repeating-linear-gradient(115deg, transparent 0 46px, rgba(200,155,60,.05) 46px 48px, transparent 48px 94px, rgba(255,255,255,.035) 94px 96px);
+    mix-blend-mode:overlay;
+  }
+  .hero-glow{
+    position:absolute; width:640px; height:640px; border-radius:50%;
+    background:radial-gradient(circle, rgba(200,155,60,.25), transparent 70%);
+    top:-220px; right:-160px; filter:blur(10px);
+  }
+  .hero-content{position:relative; z-index:2; padding:120px 0 72px;}
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:10px; font-family:'Space Mono',monospace; font-size:.75rem;
+    letter-spacing:.14em; text-transform:uppercase; color:var(--gold); margin-bottom:26px;
+  }
+  .eyebrow .dot{width:6px; height:6px; border-radius:50%; background:var(--gold); animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+  .hero h1{
+    font-size:clamp(2.6rem, 6vw, 5.2rem); line-height:.98; color:var(--white); max-width:920px;
+  }
+  .hero h1 em{font-style:italic; font-weight:300; color:var(--gold);}
+  .hero p.sub{
+    margin-top:26px; font-size:clamp(1rem,1.6vw,1.25rem); color:rgba(244,241,236,.78); max-width:560px; line-height:1.55;
+  }
+  .hero-actions{display:flex; gap:16px; margin-top:40px; flex-wrap:wrap;}
+  .btn-gold svg, .btn-outline-white svg{vertical-align:-3px; margin-right:8px;}
+  .hero-stats{
+    display:flex; gap:40px; margin-top:64px; padding-top:28px; border-top:1px solid rgba(244,241,236,.14); flex-wrap:wrap;
+  }
+  .hero-stats div span.n{display:block; font-family:'Fraunces',serif; font-size:1.7rem; color:var(--white); font-weight:600;}
+  .hero-stats div span.l{font-size:.75rem; color:rgba(244,241,236,.55); text-transform:uppercase; letter-spacing:.08em;}
+
+  section{padding:100px 0;}
+  @media(max-width:640px){section{padding:64px 0;}}
+  .section-head{display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:48px; gap:20px; flex-wrap:wrap;}
+  .section-eyebrow{font-family:'Space Mono',monospace; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--tiv-red); margin-bottom:12px; display:block;}
+  html[data-theme="light"] .section-eyebrow{color:var(--tiv-red);}
+  .section-head h2{font-size:clamp(1.8rem,3.2vw,2.6rem);}
+  .see-all{font-size:.88rem; font-weight:700; color:var(--gold); white-space:nowrap; display:flex; align-items:center; gap:6px;}
+
+  /* TOR TIV TIMELINE */
+  .timeline-outer{position:relative;}
+  .timeline-scroll{
+    display:flex; gap:24px; overflow-x:auto; padding:8px 4px 28px; scroll-snap-type:x mandatory;
+    scrollbar-width:thin; scrollbar-color:var(--gold) transparent;
+  }
+  .tor-card{
+    scroll-snap-align:start; flex:0 0 300px; background:var(--bg-card); border:1px solid var(--hairline);
+    border-radius:20px; overflow:hidden; position:relative; transition:transform .25s ease, border-color .25s ease;
+  }
+  .tor-card:hover{transform:translateY(-6px); border-color:var(--gold);}
+  .tor-portrait{
+    height:220px; position:relative;
+    background:linear-gradient(150deg, var(--earth), var(--tiv-red) 70%);
+  }
+  .tor-portrait::after{
+    content:""; position:absolute; inset:0;
+    background:repeating-linear-gradient(90deg, transparent 0 14px, rgba(0,0,0,.18) 14px 18px);
+  }
+  .tor-number{
+    position:absolute; top:14px; left:14px; font-family:'Space Mono',monospace; font-size:.72rem;
+    color:rgba(255,255,255,.85); background:rgba(0,0,0,.35); padding:4px 10px; border-radius:999px; backdrop-filter:blur(4px);
+  }
+  .tor-body{padding:20px;}
+  .tor-body h3{font-size:1.15rem; margin-bottom:4px;}
+  .tor-reign{font-family:'Space Mono',monospace; font-size:.75rem; color:var(--gold); margin-bottom:12px; display:block;}
+  .tor-bio{font-size:.85rem; color:var(--text-dim); line-height:1.5; margin-bottom:16px; min-height:60px;}
+  .tor-read{font-size:.8rem; font-weight:700; color:var(--gold); display:flex; align-items:center; gap:6px;}
+
+  /* ARTISTS */
+  .artist-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:22px;}
+  .artist-card{text-align:center; cursor:pointer;}
+  .artist-photo{
+    width:100%; aspect-ratio:1; border-radius:50%; margin-bottom:16px; position:relative;
+    background:conic-gradient(from 140deg, var(--tiv-red), var(--earth), var(--gold), var(--tiv-red));
+    padding:4px; transition:transform .25s ease;
+  }
+  .artist-card:hover .artist-photo{transform:scale(1.04);}
+  .artist-photo::after{content:""; position:absolute; inset:4px; border-radius:50%; background:var(--bg-raised);}
+  .artist-photo .verify{
+    position:absolute; bottom:4px; right:4px; width:26px; height:26px; border-radius:50%; z-index:2;
+    background:var(--gold); border:3px solid var(--bg); display:flex; align-items:center; justify-content:center; font-size:.7rem;
+  }
+  .artist-card h4{font-size:.98rem; margin-bottom:3px;}
+  .artist-meta{font-size:.78rem; color:var(--text-dim);}
+  .follow-btn{
+    margin-top:12px; font-size:.75rem; font-weight:700; padding:7px 18px; border-radius:999px;
+    border:1px solid var(--hairline); background:transparent; color:var(--text); cursor:pointer;
+  }
+  .follow-btn:hover{border-color:var(--gold); color:var(--gold);}
+
+  /* CATEGORIES */
+  .cat-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:18px;}
+  .cat-card{
+    padding:26px 22px; border-radius:18px; position:relative; overflow:hidden; min-height:120px;
+    display:flex; align-items:flex-end; font-family:'Fraunces',serif; font-size:1.15rem; font-weight:600; color:#fff;
+    transition:transform .2s ease;
+  }
+  .cat-card:hover{transform:translateY(-4px);}
+  .cat-card::before{content:""; position:absolute; inset:0; opacity:.9;}
+  .cat-card span{position:relative; z-index:1;}
+
+  /* SONGS LIST */
+  .song-list{display:flex; flex-direction:column; border-top:1px solid var(--hairline);}
+  .song-row{
+    display:grid; grid-template-columns:32px 52px 1fr auto auto; align-items:center; gap:18px;
+    padding:14px 12px; border-bottom:1px solid var(--hairline); transition:background .15s;
+  }
+  .song-row:hover{background:var(--bg-raised);}
+  .song-idx{font-family:'Space Mono',monospace; font-size:.8rem; color:var(--text-dim);}
+  .song-art{
+    width:52px; height:52px; border-radius:10px;
+    background:linear-gradient(135deg, var(--tiv-red), var(--gold));
+  }
+  .song-title{font-weight:700; font-size:.95rem;}
+  .song-artist{font-size:.82rem; color:var(--text-dim); margin-top:2px;}
+  .song-stats{display:flex; gap:18px; font-family:'Space Mono',monospace; font-size:.76rem; color:var(--text-dim);}
+  .song-actions{display:flex; align-items:center; gap:10px;}
+  .play-btn{
+    width:36px; height:36px; border-radius:50%; background:var(--gold); color:#1a1204; border:none;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+  }
+  @media(max-width:640px){.song-stats{display:none;}}
+
+  /* VIDEOS */
+  .video-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:26px;}
+  .video-card{cursor:pointer;}
+  .video-thumb{
+    aspect-ratio:16/9; border-radius:14px; position:relative; overflow:hidden;
+    background:linear-gradient(160deg, var(--earth), #2b1b10 80%);
+  }
+  .video-thumb video{position:absolute;inset:0;z-index:2;width:100%;height:100%;object-fit:cover;background:#111}
+  .video-thumb::before{
+    content:""; position:absolute; inset:0;
+    background:repeating-linear-gradient(60deg, transparent 0 20px, rgba(200,155,60,.08) 20px 22px);
+  }
+  .video-duration{
+    position:absolute; bottom:8px; right:8px; background:rgba(0,0,0,.7); color:#fff; font-family:'Space Mono',monospace;
+    font-size:.72rem; padding:2px 7px; border-radius:5px;
+  }
+  .video-play{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .2s;
+  }
+  .video-card:hover .video-play{opacity:1;}
+  .video-play-circle{
+    width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,.92); display:flex; align-items:center; justify-content:center;
+  }
+  .video-meta{padding-top:12px;}
+  .video-meta h4{font-size:.95rem; margin-bottom:4px; font-family:'Manrope',sans-serif; font-weight:700;}
+  .video-meta .vm-sub{font-size:.78rem; color:var(--text-dim);}
+
+  /* COMMUNITY */
+  .leader-list{display:flex; flex-direction:column; gap:2px;}
+  .leader-row{
+    display:grid; grid-template-columns:40px 44px 1fr auto; align-items:center; gap:16px;
+    padding:14px 16px; border-radius:12px; transition:background .15s;
+  }
+  .leader-row:hover{background:var(--bg-raised);}
+  .leader-rank{font-family:'Fraunces',serif; font-weight:700; color:var(--gold); font-size:1.1rem;}
+  .leader-avatar{width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,var(--tiv-red),var(--earth));}
+  .leader-name{font-weight:700; font-size:.92rem;}
+  .leader-sub{font-size:.76rem; color:var(--text-dim);}
+  .leader-score{font-family:'Space Mono',monospace; font-size:.82rem; color:var(--gold);}
+
+  /* CTA band */
+  .cta-band{
+    position:relative; padding:90px 0; text-align:center; overflow:hidden;
+    background:linear-gradient(140deg, var(--tiv-red), var(--earth) 75%);
+  }
+  .cta-band::before{
+    content:""; position:absolute; inset:0;
+    background:repeating-linear-gradient(115deg, transparent 0 30px, rgba(0,0,0,.12) 30px 33px, transparent 33px 60px, rgba(255,255,255,.06) 60px 63px);
+  }
+  .cta-band h2{position:relative; z-index:1; color:#fff; font-size:clamp(1.8rem,4vw,2.8rem); max-width:640px; margin:0 auto 18px;}
+  .cta-band p{position:relative; z-index:1; color:rgba(255,255,255,.82); max-width:480px; margin:0 auto 34px;}
+  .cta-actions{position:relative; z-index:1; display:flex; gap:16px; justify-content:center; flex-wrap:wrap;}
+
+  footer{border-top:1px solid var(--hairline); padding:64px 0 32px; background:var(--bg-raised);font-size:14px;line-height:1.6;}
+  .footer-grid{display:grid; grid-template-columns:1.6fr repeat(3,1fr); gap:40px; margin-bottom:48px;}
+  @media(max-width:768px){.footer-grid{grid-template-columns:1fr 1fr;}}
+  .footer-col h5{font-size:.78rem; text-transform:uppercase; letter-spacing:.1em; color:var(--text-dim); margin-bottom:16px;}
+  .footer-col a{display:block; font-size:.88rem; margin-bottom:10px; color:var(--text); opacity:.85;}
+  .footer-col a:hover{color:var(--gold);}
+  .footer-bottom{
+    display:flex; justify-content:space-between; align-items:center; padding-top:28px; border-top:1px solid var(--hairline);
+    font-size:.78rem; color:var(--text-dim); flex-wrap:wrap; gap:12px;
+  }
+  .social-row{display:flex; gap:14px;}
+
+  ::-webkit-scrollbar{height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--gold); border-radius:8px;}
+
+  .reveal{opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease;}
+  .reveal.in{opacity:1; transform:translateY(0);}
+  @media (prefers-reduced-motion: reduce){
+    .reveal{opacity:1; transform:none; transition:none;}
+    .eyebrow .dot{animation:none;}
+  }
+  .hero-carousel{position:relative;min-height:620px;overflow:hidden}.hero-slides{position:relative;min-height:620px}.hero-slide{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.55fr);align-items:center;gap:70px;opacity:0;transform:translateX(-8%);pointer-events:none;transition:opacity .7s ease,transform .7s ease}.hero-slide.active{opacity:1;transform:translateX(0);pointer-events:auto}.hero-slide.leaving{transform:translateX(8%)}.hero-picture{aspect-ratio:1;border-radius:26px;overflow:hidden;border:1px solid var(--hairline);box-shadow:0 28px 80px rgba(0,0,0,.32)}.hero-picture img{width:100%;height:100%;object-fit:cover}.hero-slide h1{font-family:'Manrope',sans-serif;font-size:clamp(3rem,6.2vw,6.1rem);line-height:.92;text-transform:uppercase;letter-spacing:-.065em}.hero-slide h1 span{color:#ffad73}.hero-dots{position:absolute;left:0;bottom:28px;z-index:4;display:flex;gap:9px}.hero-dot{width:34px;height:8px;border:0;border-radius:20px;background:rgba(255,255,255,.28);cursor:pointer}.hero-dot.active{background:#ffad73}.download-menu{position:relative}.download-toggle{border:1px solid var(--hairline);background:transparent;color:inherit;border-radius:9px;padding:8px 10px;font-weight:800;cursor:pointer}.download-options{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:8;min-width:160px;padding:7px;background:var(--bg-raised);border:1px solid var(--hairline);border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.3)}.download-menu.open .download-options{display:grid}.download-options a{padding:9px 10px;border-radius:7px;font-size:.76rem}.donation-float{position:fixed;right:22px;bottom:22px;z-index:70;display:none;max-width:min(360px,calc(100vw - 32px));padding:14px 18px;border:2px solid #fff;border-radius:999px;background:#d71920;color:#fff;font-weight:900;box-shadow:0 8px 30px rgba(215,25,32,.45);animation:donationPulse 1.35s ease-in-out infinite}.donation-float.visible{display:block}@keyframes donationPulse{50%{transform:scale(1.055);box-shadow:0 8px 38px rgba(255,54,61,.8)}}.mobile-menu{display:none}
+  @media(max-width:900px){.hero-carousel,.hero-slides{min-height:690px}.hero-slide{grid-template-columns:1fr;padding:35px 0 76px}.hero-picture{width:min(72vw,310px);justify-self:center;order:-1}.hero-slide h1{font-size:clamp(2.6rem,12vw,4.7rem)}.hero-dots{bottom:20px}.burger{display:grid!important}.mobile-menu.open{display:grid;position:absolute;top:100%;left:0;right:0;padding:16px 20px;background:var(--bg-raised);border-bottom:1px solid var(--hairline);gap:6px}.mobile-menu a{min-height:46px;display:flex;align-items:center;padding:0 14px;border-radius:9px;font-weight:800}}
+  @media(max-width:520px){.hero-carousel,.hero-slides{min-height:650px}.hero-picture{width:min(62vw,235px)}.donation-float{right:16px;bottom:16px;text-align:center}.song-actions{flex-wrap:wrap}.download-options{right:0}}
+  .donation-dialog{width:min(92vw,520px);padding:0;border:1px solid var(--hairline);border-radius:24px;background:var(--bg-raised);color:var(--text);box-shadow:0 30px 100px rgba(0,0,0,.55)}.donation-dialog::backdrop{background:rgba(20,0,35,.72);backdrop-filter:blur(7px)}.donation-card{padding:28px}.donation-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}.donation-head h2{font-size:clamp(1.7rem,5vw,2.4rem)}.donation-close{width:44px;height:44px;border:1px solid var(--hairline);border-radius:50%;background:transparent;color:inherit;font-size:1.4rem;cursor:pointer}.donation-message{margin:12px 0 22px;color:var(--text-dim);line-height:1.65}.donation-details{display:grid;gap:10px}.donation-detail{padding:14px 16px;border:1px solid var(--hairline);border-radius:13px;background:var(--bg-card)}.donation-detail span,.donation-detail strong{display:block}.donation-detail span{margin-bottom:5px;color:var(--text-dim);font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em}.donation-account-row{display:flex;align-items:center;justify-content:space-between;gap:14px}.copy-account,.donation-payment-link{min-height:44px;border:0;border-radius:10px;padding:10px 15px;background:#ffad73;color:#26003f;font-weight:900;cursor:pointer}.donation-payment-link{display:none;margin-top:16px;text-align:center}.donation-payment-link.visible{display:flex;align-items:center;justify-content:center}.donation-note{margin-top:16px;color:var(--text-dim);font-size:.75rem;line-height:1.5}
+  @media(prefers-reduced-motion:reduce){.hero-slide,.donation-float{transition:none;animation:none}}
+</style>
+<style>
+  /* Balanced light–dark presentation for the new silver identity */
+  :root,html[data-theme="dark"],html[data-theme="light"]{
+    --bg:#f4f4f2;--bg-raised:#fff;--bg-card:#fff;--text:#101010;
+    --text-dim:#666;--hairline:rgba(0,0,0,.15);--gold:#111;--tiv-red:#111;--earth:#555;
+  }
+  body{background:#f4f4f2;color:#101010}
+  header{background:rgba(7,7,7,.94);color:#fff;border-color:#303030}.nav-inner{color:#fff}nav.links a{color:#aaa}nav.links a:hover,nav.links a.active{color:#fff}
+  .brand-logo{object-position:50% 34%;box-shadow:0 0 0 1px rgba(255,255,255,.45)}
+  .hero{color:#fff;background:radial-gradient(circle at 78% 45%,#292929 0%,#111 28%,#050505 64%,#000 100%)}
+  .hero p.sub{color:#d0d0d0}.hero-logo-shell{border-radius:22px;padding:8px;background:#181818;box-shadow:0 0 0 1px #5d5d5d,0 35px 90px rgba(0,0,0,.65)}.hero-logo-shell img{border-radius:15px;object-fit:cover}.hero-logo-shell::before{display:none}
+  #heritage,#songs,#community{background:#fff;color:#101010}
+  #artists,#videos{background:#ededeb;color:#101010}
+  section:nth-of-type(4){background:#0a0a0a;color:#fff}
+  #heritage .section-head,#artists .section-head,#songs .section-head,#videos .section-head,#community .section-head{border-color:#111}
+  #heritage .section-eyebrow,#artists .section-eyebrow,#songs .section-eyebrow,#videos .section-eyebrow,#community .section-eyebrow{color:#666}
+  #heritage .see-all,#artists .see-all,#songs .see-all,#videos .see-all,#community .see-all{color:#111;border-color:#111}
+  .tor-card{background:#fff;color:#111;border-color:#d0d0d0;box-shadow:0 12px 34px rgba(0,0,0,.08)}.tor-card:hover{border-color:#111;box-shadow:0 20px 42px rgba(0,0,0,.14)}.tor-bio{color:#666}.tor-reign,.tor-read{color:#111}
+  .artist-photo::after{background:#e4e4e2}.artist-photo .verify{background:#111;color:#fff;border-color:#ededeb}.artist-meta{color:#666}.follow-btn{color:#111;border-color:#aaa}.follow-btn:hover{background:#111;color:#fff;border-color:#111}
+  section:nth-of-type(4) .section-head{border-color:#fff}section:nth-of-type(4) .section-eyebrow{color:#aaa}.cat-card{background:#151515!important;color:#fff;border-color:#444}.cat-card:hover{background:#fff!important;color:#000}
+  .song-list{border-color:#111}.song-row{border-color:#dedede}.song-row:hover{background:#f4f4f2}.song-title{color:#111}.song-artist,.song-stats,.song-idx{color:#666}.song-art{border-color:#bbb}.play-btn{background:#111;color:#fff}
+  .video-thumb{background:linear-gradient(145deg,#555,#111);border-color:#888}.video-meta h4{color:#111}.video-meta .vm-sub{color:#666}.video-card:hover .video-thumb{border-color:#111}
+  .leader-row{border-color:#ddd}.leader-row:hover{background:#f2f2f0}.leader-name{color:#111}.leader-sub{color:#666}.leader-score,.leader-rank{color:#111}.leader-avatar{background:linear-gradient(135deg,#111,#aaa)}
+  .cta-band{background:#d8d8d5;border-color:#111}.cta-band::before{background:repeating-linear-gradient(120deg,transparent 0 45px,rgba(0,0,0,.035) 45px 47px)}
+  footer{background:#080808;color:#fff;border-color:#333}.footer-col p,.footer-bottom{color:#aaa!important}.footer-col a{color:#bbb}.footer-col h5{color:#fff}
+  .search-panel{background:#fff;border-color:#aaa;box-shadow:0 24px 70px rgba(0,0,0,.25)}.search-panel input{background:#f5f5f3;color:#111;border-color:#aaa}.search-submit{color:#111}
+  @media(max-width:900px){.hero{background:linear-gradient(135deg,#050505,#1c1c1c)}}
+</style>
+<style>
+  :root,html[data-theme="light"]{--black:#070707;--white:#fff;--gold:#fff;--tiv-red:#111;--earth:#242424;--bg:#070707;--bg-raised:#101010;--bg-card:#151515;--text:#fff;--text-dim:#a4a4a4;--hairline:rgba(255,255,255,.13);--stripe-a:#050505;--stripe-b:#fff}
+  body{background:#070707;color:#fff}h1,h2,h3,h4{font-family:'Manrope',sans-serif;letter-spacing:-.045em}.wrap{max-width:1360px}
+  .stripes{height:3px;background:linear-gradient(90deg,#fff 0 12%,transparent 12%);opacity:1}header{background:rgba(7,7,7,.82);border-bottom:1px solid var(--hairline)}.nav-inner{height:84px}
+  .brand{font-family:'Manrope',sans-serif;text-transform:uppercase;letter-spacing:.08em;font-size:.93rem}.brand-logo{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#fff;border:1px solid #fff;display:block}
+  nav.links{gap:30px;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em}nav.links a.active::after{background:#fff}.btn{border-radius:10px;text-transform:uppercase;letter-spacing:.06em;font-size:.75rem}.btn-gold{background:#fff;color:#050505;box-shadow:none}.icon-btn:hover{border-color:#fff;color:#fff;background:#181818}
+  .search-wrap{position:relative;display:flex;align-items:center}.search-trigger{padding:0;overflow:hidden;background:transparent;border:1px solid #343434}.search-trigger svg{width:18px;height:18px}
+  .search-panel{position:absolute;right:0;top:52px;width:min(430px,calc(100vw - 40px));padding:10px;background:#101010;border:1px solid var(--hairline);border-radius:15px;box-shadow:0 24px 70px rgba(0,0,0,.6);display:none}.search-panel.open{display:flex}.search-panel input{width:100%;background:#070707;border:1px solid #333;border-radius:10px;color:#fff;padding:13px 44px 13px 15px;font:inherit;outline:none}.search-panel input:focus{border-color:#fff}.search-submit{position:absolute;right:19px;top:19px;background:none;border:0;color:#fff;cursor:pointer}
+  .hero{min-height:88vh;align-items:center;background:radial-gradient(circle at 78% 35%,rgba(255,255,255,.1),transparent 20%),linear-gradient(110deg,#050505 0%,#0a0a0a 58%,#171717 100%)}.hero::before{background:linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px);background-size:48px 48px}.hero-glow{display:none}.hero-content{padding:150px 0 88px}.hero-layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,.55fr);align-items:center;gap:80px}
+  .hero-logo-shell{position:relative;aspect-ratio:1;border-radius:50%;background:#fff;padding:22px;box-shadow:0 0 0 1px #333,0 30px 100px rgba(255,255,255,.12)}.hero-logo-shell::before{content:"";position:absolute;inset:-20px;border:1px solid #292929;border-radius:50%}.hero-logo-shell img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+  .eyebrow,.section-eyebrow,.see-all,.tor-reign,.tor-read,.leader-score{color:#fff}.eyebrow{border:1px solid #333;border-radius:999px;padding:8px 12px;margin-bottom:30px}.eyebrow .dot{background:#fff}.hero h1{font-family:'Manrope',sans-serif;font-size:clamp(3rem,6.8vw,6.4rem);line-height:.9;text-transform:uppercase;max-width:980px}.hero h1 em{font-style:normal;-webkit-text-stroke:1px #fff;color:transparent}.hero p.sub{color:#aaa}.section-head{border-top:1px solid #292929;padding-top:22px}
+  .tor-card:hover,.follow-btn:hover{border-color:#fff;color:#fff}.tor-portrait{background:linear-gradient(145deg,#313131,#090909)}.artist-photo{background:conic-gradient(from 140deg,#fff,#262626,#777,#fff)}.artist-photo .verify,.play-btn{background:#fff;color:#000}.cat-card{border:1px solid #333;filter:grayscale(1)}.song-art,.leader-avatar{background:linear-gradient(135deg,#fff,#222)}
+  .cta-band{background:#fff;color:#070707}.cta-band::before{background:repeating-linear-gradient(120deg,transparent 0 45px,rgba(0,0,0,.04) 45px 47px)}.cta-band h2,.cta-band p{color:#070707}.cta-band .btn-gold{background:#070707;color:#fff}.cta-band .btn-outline-white{border-color:#070707;color:#070707}::-webkit-scrollbar-thumb{background:#fff}
+  @media(max-width:900px){.hero-layout{grid-template-columns:1fr}.hero-logo-shell{display:none}}@media(max-width:640px){.nav-inner{height:72px}.brand-logo{width:42px;height:42px}.hero-content{padding:120px 0 65px}.hero h1{font-size:clamp(2.8rem,15vw,4.4rem)}}
+</style>
+<style>
+  /* Sharper professional finish */
+  :root,html[data-theme="light"]{
+    --bg:#000;--bg-raised:#080808;--bg-card:#0d0d0d;--text:#fff;
+    --text-dim:#bdbdbd;--hairline:rgba(255,255,255,.2);
+  }
+  body{background:#000;letter-spacing:-.01em}
+  header{background:rgba(0,0,0,.94);backdrop-filter:blur(22px);box-shadow:0 1px 0 rgba(255,255,255,.12)}
+  .nav-inner{height:88px}.brand{font-weight:800;letter-spacing:.12em}.brand-logo{width:52px;height:52px}
+  nav.links a{color:#b5b5b5}nav.links a:hover,nav.links a.active{color:#fff}nav.links a.active::after{height:3px;bottom:-10px}
+  .icon-btn{border-color:#343434}.btn{font-weight:800;padding:12px 23px}.btn-ghost{border-color:#444}.btn-ghost:hover{background:#fff;color:#000;border-color:#fff}
+  .hero{background:linear-gradient(105deg,#000 0%,#050505 55%,#111 100%);border-bottom:1px solid #2b2b2b}
+  .hero::before{opacity:.9;background:linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px);background-size:56px 56px;mask-image:linear-gradient(90deg,#000 0%,rgba(0,0,0,.7) 52%,transparent 100%)}
+  .hero h1{font-weight:800;letter-spacing:-.075em}.hero h1 em{-webkit-text-stroke:1.5px #fff}.hero p.sub{color:#c5c5c5;line-height:1.7}
+  .hero-logo-shell{padding:16px;box-shadow:0 0 0 1px #fff,0 0 0 18px #080808,0 0 0 19px #3b3b3b,0 40px 100px rgba(0,0,0,.85)}
+  .hero-logo-shell::before{display:none}.eyebrow{background:#fff;color:#000;border:0;font-weight:700}.eyebrow .dot{background:#000}
+  .hero-actions .btn{min-width:155px;text-align:center}.hero-stats{border-top-color:#333}.hero-stats div span.n{font-size:1.9rem;font-weight:800}.hero-stats div span.l{color:#999;font-weight:700}
+  section{position:relative}.section-head{border-top:2px solid #fff;padding-top:26px}.section-eyebrow{color:#aaa;letter-spacing:.18em;font-weight:700}.section-head h2{font-weight:800}.see-all{border-bottom:1px solid #fff;padding-bottom:4px}
+  .tor-card{border-color:#2d2d2d;border-radius:10px;background:#090909}.tor-card:hover{transform:translateY(-8px);box-shadow:0 22px 45px rgba(0,0,0,.7)}.tor-portrait{background:linear-gradient(135deg,#4c4c4c 0%,#171717 45%,#000 100%)}
+  .artist-photo{padding:2px;background:#fff}.artist-photo::after{inset:2px}.artist-photo .verify{border-color:#000}.follow-btn{border-color:#444;text-transform:uppercase;letter-spacing:.08em}.follow-btn:hover{background:#fff;color:#000}
+  .cat-grid{gap:12px}.cat-card{border-color:#444;border-radius:8px;min-height:145px;background:#0a0a0a!important;font-size:1.3rem}.cat-card::after{content:'↗';position:absolute;right:18px;top:16px;font-family:'Manrope';font-size:1rem;color:#777}.cat-card:hover{background:#fff!important;color:#000;border-color:#fff;transform:translateY(-5px)}
+  .song-list{border-top:2px solid #fff}.song-row{padding:17px 12px;border-bottom-color:#292929}.song-row:hover{background:#111}.song-art{background:linear-gradient(135deg,#fff 0 48%,#181818 48% 100%);border:1px solid #555}.play-btn{width:40px;height:40px}.play-btn:hover{transform:scale(1.08)}
+  .video-thumb{border:1px solid #393939;border-radius:8px;background:linear-gradient(145deg,#343434,#050505)}.video-card:hover .video-thumb{border-color:#fff}.leader-row{border-bottom:1px solid #222;border-radius:0}.leader-row:hover{background:#111}
+  .cta-band{border-top:8px solid #fff;border-bottom:8px solid #fff}.cta-band h2{font-weight:800;letter-spacing:-.06em}.cta-band p{color:#383838}.cta-band .btn{border-radius:6px}
+  footer{background:#050505}.footer-col h5{color:#fff}.footer-col a{color:#aaa}.footer-col a:hover{color:#fff}
+  .search-panel{border-color:#555;border-radius:8px;background:#080808}.search-panel input{border-radius:5px;border-color:#555}.search-panel input:focus{box-shadow:0 0 0 2px #fff}
+  @media(max-width:640px){.nav-inner{height:76px}.brand-logo{width:46px;height:46px}.section-head{border-top-width:1px}.cat-card{min-height:120px}}
+</style>
+<style>
+  /* Final light–dark palette layer */
+  :root,html[data-theme="dark"],html[data-theme="light"]{--bg:#f4f4f2;--bg-raised:#fff;--bg-card:#fff;--text:#101010;--text-dim:#666;--hairline:rgba(0,0,0,.15);--gold:#111;--tiv-red:#111;--earth:#555}
+  body{background:#f4f4f2;color:#101010}
+  header{background:rgba(7,7,7,.94);color:#fff;border-color:#303030}.nav-inner{color:#fff}nav.links a{color:#aaa}nav.links a:hover,nav.links a.active{color:#fff}.brand-logo{object-position:50% 34%;box-shadow:0 0 0 1px rgba(255,255,255,.45)}
+  .hero{color:#fff;background:radial-gradient(circle at 78% 45%,#292929 0%,#111 28%,#050505 64%,#000 100%)}.hero p.sub{color:#d0d0d0}.hero-logo-shell{border-radius:22px;padding:8px;background:#181818;box-shadow:0 0 0 1px #5d5d5d,0 35px 90px rgba(0,0,0,.65)}.hero-logo-shell img{border-radius:15px;object-fit:cover}.hero-logo-shell::before{display:none}
+  #heritage,#songs,#community{background:#fff;color:#101010}#artists,#videos{background:#ededeb;color:#101010}section:nth-of-type(4){background:#0a0a0a;color:#fff}
+  #heritage .section-head,#artists .section-head,#songs .section-head,#videos .section-head,#community .section-head{border-color:#111}#heritage .section-eyebrow,#artists .section-eyebrow,#songs .section-eyebrow,#videos .section-eyebrow,#community .section-eyebrow{color:#666}#heritage .see-all,#artists .see-all,#songs .see-all,#videos .see-all,#community .see-all{color:#111;border-color:#111}
+  .tor-card{background:#fff;color:#111;border-color:#d0d0d0;box-shadow:0 12px 34px rgba(0,0,0,.08)}.tor-card:hover{border-color:#111;box-shadow:0 20px 42px rgba(0,0,0,.14)}.tor-bio{color:#666}.tor-reign,.tor-read{color:#111}
+  .artist-photo::after{background:#e4e4e2}.artist-photo .verify{background:#111;color:#fff;border-color:#ededeb}.artist-meta{color:#666}.follow-btn{color:#111;border-color:#aaa}.follow-btn:hover{background:#111;color:#fff;border-color:#111}
+  section:nth-of-type(4) .section-head{border-color:#fff}section:nth-of-type(4) .section-eyebrow{color:#aaa}.cat-card{background:#151515!important;color:#fff;border-color:#444}.cat-card:hover{background:#fff!important;color:#000}
+  .song-list{border-color:#111}.song-row{border-color:#dedede}.song-row:hover{background:#f4f4f2}.song-title{color:#111}.song-artist,.song-stats,.song-idx{color:#666}.song-art{border-color:#bbb}.play-btn{background:#111;color:#fff}
+  .video-thumb{background:linear-gradient(145deg,#555,#111);border-color:#888}.video-meta h4{color:#111}.video-meta .vm-sub{color:#666}.video-card:hover .video-thumb{border-color:#111}
+  .leader-row{border-color:#ddd}.leader-row:hover{background:#f2f2f0}.leader-name{color:#111}.leader-sub{color:#666}.leader-score,.leader-rank{color:#111}.leader-avatar{background:linear-gradient(135deg,#111,#aaa)}
+  .cta-band{background:#d8d8d5;border-color:#111}.cta-band::before{background:repeating-linear-gradient(120deg,transparent 0 45px,rgba(0,0,0,.035) 45px 47px)}
+  footer{background:#080808;color:#fff;border-color:#333}.footer-col p,.footer-bottom{color:#aaa!important}.footer-col a{color:#bbb}.footer-col h5{color:#fff}
+  .search-panel{background:#fff;border-color:#aaa;box-shadow:0 24px 70px rgba(0,0,0,.25)}.search-panel input{background:#f5f5f3;color:#111;border-color:#aaa}.search-submit{color:#111}
+  @media(max-width:900px){.hero{background:linear-gradient(135deg,#050505,#1c1c1c)}}
+</style>
+<style>
+  .tor-portrait{height:260px;background:#111;overflow:hidden}
+  .tor-portrait img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:grayscale(1);transition:transform .35s ease}
+  .tor-card:hover .tor-portrait img{transform:scale(1.04)}
+  .tor-portrait::after{background:linear-gradient(180deg,transparent 55%,rgba(0,0,0,.68))}
+  .tor-archive{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:34px;background:radial-gradient(circle at 50% 25%,#3d3d3d,#090909 68%);color:#fff}
+  .tor-archive strong{font-size:3rem;letter-spacing:-.08em}.tor-archive small{display:block;margin-top:10px;color:#aaa;text-transform:uppercase;letter-spacing:.12em}
+
+  /* Keep the hero immediately below the navigation without a large empty band. */
+  html{background:#000;}
+  ::-webkit-scrollbar-track{background:#111;}
+  .hero{
+    min-height:calc(100svh - 91px);
+    align-items:center;
+  }
+  .hero-content{
+    width:100%;
+    padding:clamp(48px,6vw,78px) 0 clamp(54px,7vw,82px);
+  }
+  @media(max-width:900px){
+    .hero{min-height:calc(100svh - 75px);}
+    .hero-content{padding:52px 0 62px;}
+  }
+  @media(max-width:640px){
+    .hero{min-height:auto;}
+    .hero-content{padding:42px 0 52px;}
+  }
+
+  /* Authoritative day/night themes. These intentionally override legacy layers above. */
+  html{color-scheme:dark;}
+  html[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#2b2e33;--bg-raised:#34383e;--bg-card:#3d4148;--text:#f7f8fa;
+    --text-dim:#c2c7cf;--hairline:rgba(255,255,255,.14);--gold:#fff;
+  }
+  html[data-theme="dark"],html[data-theme="dark"] body{background:#2b2e33;color:#f7f8fa}
+  html[data-theme="dark"] header{background:rgba(43,46,51,.94);border-color:#555a62;box-shadow:0 1px 0 rgba(255,255,255,.1)}
+  html[data-theme="dark"] .hero{background:radial-gradient(circle at 82% 38%,#555a62 0%,#41454b 28%,#34373c 63%,#2d3035 100%);border-color:#5b6068}
+  html[data-theme="dark"] .hero::before{opacity:.55}
+  html[data-theme="dark"] .hero-logo-shell{background:#41454b;box-shadow:0 0 0 1px #737983,0 30px 80px rgba(17,20,24,.42)}
+  html[data-theme="dark"] #heritage,html[data-theme="dark"] #songs,html[data-theme="dark"] #community{background:#30343a;color:#f7f8fa}
+  html[data-theme="dark"] #artists,html[data-theme="dark"] #videos{background:#393d43;color:#f7f8fa}
+  html[data-theme="dark"] section:nth-of-type(4){background:#2c3035;color:#f7f8fa}
+  html[data-theme="dark"] #heritage .section-head,html[data-theme="dark"] #artists .section-head,html[data-theme="dark"] #songs .section-head,html[data-theme="dark"] #videos .section-head,html[data-theme="dark"] #community .section-head{border-color:#767c85}
+  html[data-theme="dark"] #heritage .section-eyebrow,html[data-theme="dark"] #artists .section-eyebrow,html[data-theme="dark"] #songs .section-eyebrow,html[data-theme="dark"] #videos .section-eyebrow,html[data-theme="dark"] #community .section-eyebrow,html[data-theme="dark"] .artist-meta,html[data-theme="dark"] .song-artist,html[data-theme="dark"] .song-stats,html[data-theme="dark"] .song-idx,html[data-theme="dark"] .leader-sub,html[data-theme="dark"] .video-meta .vm-sub{color:#b9bec6}
+  html[data-theme="dark"] #heritage .see-all,html[data-theme="dark"] #artists .see-all,html[data-theme="dark"] #songs .see-all,html[data-theme="dark"] #videos .see-all,html[data-theme="dark"] #community .see-all{color:#fff;border-color:#fff}
+  html[data-theme="dark"] .tor-card{background:#3c4148;color:#fff;border-color:#5b616a;box-shadow:0 16px 38px rgba(10,12,15,.2)}
+  html[data-theme="dark"] .tor-bio{color:#c4c9d0}html[data-theme="dark"] .tor-reign,html[data-theme="dark"] .tor-read{color:#fff}
+  html[data-theme="dark"] .song-row{border-color:#535861}html[data-theme="dark"] .song-row:hover,html[data-theme="dark"] .leader-row:hover{background:#41464d}
+  html[data-theme="dark"] .song-title,html[data-theme="dark"] .video-meta h4,html[data-theme="dark"] .leader-name,html[data-theme="dark"] .leader-score,html[data-theme="dark"] .leader-rank{color:#fff}
+  html[data-theme="dark"] .artist-photo::after{background:#34383e}html[data-theme="dark"] .follow-btn{color:#fff;border-color:#777d86}
+  html[data-theme="dark"] .search-panel{background:#3b3f45;border-color:#727781}html[data-theme="dark"] .search-panel input{background:#2d3035;color:#fff;border-color:#686e77}
+  html[data-theme="dark"] .cta-band{background:#c8cbd0;color:#20242a}html[data-theme="dark"] .cta-band h2,html[data-theme="dark"] .cta-band p{color:#20242a}
+  html[data-theme="dark"] footer{background:#25282d}html[data-theme="dark"] ::-webkit-scrollbar-track{background:#2b2e33}
+
+  html[data-theme="light"]{
+    color-scheme:light;
+    --bg:#edf0f3;--bg-raised:#fff;--bg-card:#fff;--text:#20252c;
+    --text-dim:#606872;--hairline:rgba(25,31,40,.16);--gold:#20252c;
+  }
+  html[data-theme="light"],html[data-theme="light"] body{background:#edf0f3;color:#20252c}
+  html[data-theme="light"] header{background:rgba(249,250,251,.94);color:#20252c;border-color:#d6dbe1;box-shadow:0 1px 0 rgba(25,31,40,.1)}
+  html[data-theme="light"] .nav-inner{color:#20252c}html[data-theme="light"] nav.links a{color:#626a75}html[data-theme="light"] nav.links a:hover,html[data-theme="light"] nav.links a.active{color:#11151a}
+  html[data-theme="light"] nav.links a.active::after,html[data-theme="light"] .stripes{background:#252a31}
+  html[data-theme="light"] .icon-btn{color:#20252c;border-color:#c4cad1}html[data-theme="light"] .btn-ghost{color:#20252c;border-color:#afb6bf}html[data-theme="light"] .btn-gold{background:#252a31;color:#fff}
+  html[data-theme="light"] .hero{color:#20252c;background:radial-gradient(circle at 80% 38%,#fff 0%,#e4e8ec 30%,#d5dbe1 66%,#c8cfd6 100%);border-color:#c1c8d0}
+  html[data-theme="light"] .hero::before{opacity:.28}html[data-theme="light"] .hero h1{color:#20252c}html[data-theme="light"] .hero h1 em{-webkit-text-stroke:1.5px #20252c}
+  html[data-theme="light"] .hero p.sub{color:#4f5863}html[data-theme="light"] .eyebrow{background:#252a31;color:#fff}html[data-theme="light"] .eyebrow .dot{background:#fff}
+  html[data-theme="light"] .hero-logo-shell{background:#e2e6ea;box-shadow:0 0 0 1px #9da5af,0 28px 70px rgba(45,54,64,.18)}
+  html[data-theme="light"] .hero-actions .btn-outline-white{color:#20252c;border-color:#20252c}html[data-theme="light"] .hero-stats{border-color:#aeb6c0}html[data-theme="light"] .hero-stats div span.n{color:#20252c}html[data-theme="light"] .hero-stats div span.l{color:#58616c}
+  html[data-theme="light"] #heritage,html[data-theme="light"] #songs,html[data-theme="light"] #community{background:#fff;color:#20252c}
+  html[data-theme="light"] #artists,html[data-theme="light"] #videos{background:#e8ecf0;color:#20252c}
+  html[data-theme="light"] section:nth-of-type(4){background:#dce1e6;color:#20252c}
+  html[data-theme="light"] section:nth-of-type(4) .section-head{border-color:#363c44}html[data-theme="light"] section:nth-of-type(4) .section-eyebrow{color:#606872}
+  html[data-theme="light"] .cat-card{background:#f8f9fa!important;color:#20252c;border-color:#aeb5be}html[data-theme="light"] .cat-card:hover{background:#252a31!important;color:#fff}
+  html[data-theme="light"] .search-panel{background:#fff;border-color:#b7bec7}html[data-theme="light"] .search-panel input{background:#f3f5f7;color:#20252c;border-color:#b7bec7}html[data-theme="light"] .search-submit{color:#20252c}
+  html[data-theme="light"] footer{background:#dce1e6;color:#20252c;border-color:#bdc5ce}html[data-theme="light"] .footer-col h5{color:#20252c}html[data-theme="light"] .footer-col a,html[data-theme="light"] .footer-col p,html[data-theme="light"] .footer-bottom{color:#59626d!important}
+  html[data-theme="light"] ::-webkit-scrollbar-track{background:#e2e6ea}html[data-theme="light"] ::-webkit-scrollbar-thumb{background:#747d88}
+
+  /* Unified Firefox-inspired colour palette. */
+  html[data-theme="dark"]{--bg:#20003b;--bg-raised:#321052;--bg-card:#45166f;--text:#fff8f3;--text-dim:#d8c8e4;--hairline:#6b4385;--gold:#ffad73;--tiv-red:#7a2ba4;--earth:#45166f}
+  html[data-theme="dark"],html[data-theme="dark"] body{background:#20003b;color:#fff8f3}
+  html[data-theme="dark"] header{background:rgba(32,0,59,.95);border-color:#6b4385}
+  html[data-theme="dark"] .hero{background:radial-gradient(circle at 80% 38%,#572080 0%,#321052 42%,#20003b 100%);color:#fff8f3}
+  html[data-theme="dark"] #heritage,html[data-theme="dark"] #songs,html[data-theme="dark"] #community{background:#260545;color:#fff8f3}
+  html[data-theme="dark"] #artists,html[data-theme="dark"] #videos,html[data-theme="dark"] section:nth-of-type(4){background:#321052;color:#fff8f3}
+  html[data-theme="dark"] .tor-card,html[data-theme="dark"] .search-panel{background:#45166f;color:#fff8f3;border-color:#6b4385}
+  html[data-theme="dark"] .song-row,html[data-theme="dark"] .leader-row{border-color:#6b4385}
+  html[data-theme="dark"] .song-row:hover,html[data-theme="dark"] .leader-row:hover{background:#45166f}
+  html[data-theme="dark"] .cat-card{background:linear-gradient(140deg,#5a2385,#321052)!important;color:#fff8f3!important;border-color:#7e4c99!important}
+  html[data-theme="dark"] .play-btn,html[data-theme="dark"] .btn-gold{background:#ffad73;color:#26003f}
+  html[data-theme="dark"] .cta-band{background:#ffad73;color:#26003f;border-color:#fff8f3}html[data-theme="dark"] .cta-band h2,html[data-theme="dark"] .cta-band p{color:#26003f}
+  html[data-theme="dark"] footer{background:#17002c;color:#fff8f3;border-color:#6b4385}
+  html[data-theme="dark"] ::-webkit-scrollbar-track{background:#20003b}html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#ffad73}
+
+  html[data-theme="light"]{--bg:#fff5ef;--bg-raised:#f6e9fb;--bg-card:#fff;--text:#26003f;--text-dim:#685474;--hairline:#d7bfdc;--gold:#4d0f78;--tiv-red:#7a2ba4;--earth:#eadcf1}
+  html[data-theme="light"],html[data-theme="light"] body{background:#fff5ef;color:#26003f}
+  html[data-theme="light"] header{background:rgba(255,245,239,.96);color:#26003f;border-color:#d7bfdc}
+  html[data-theme="light"] .nav-inner,html[data-theme="light"] nav.links a{color:#685474}html[data-theme="light"] nav.links a:hover,html[data-theme="light"] nav.links a.active{color:#26003f}
+  html[data-theme="light"] .hero{background:radial-gradient(circle at 80% 38%,#fff 0%,#f8e6dc 42%,#eadcf1 100%);color:#26003f}
+  html[data-theme="light"] #heritage,html[data-theme="light"] #songs,html[data-theme="light"] #community{background:#fff;color:#26003f}
+  html[data-theme="light"] #artists,html[data-theme="light"] #videos,html[data-theme="light"] section:nth-of-type(4){background:#f6e9fb;color:#26003f}
+  html[data-theme="light"] .cat-card{background:linear-gradient(140deg,#eadcf1,#ffd6bd)!important;color:#26003f!important;border-color:#d7bfdc!important}
+  html[data-theme="light"] .cat-card:hover{background:#4d0f78!important;color:#fff!important}
+  html[data-theme="light"] .play-btn,html[data-theme="light"] .btn-gold{background:#4d0f78;color:#fff}
+  html[data-theme="light"] .cta-band{background:#ffd6bd;color:#26003f;border-color:#4d0f78}html[data-theme="light"] .cta-band h2,html[data-theme="light"] .cta-band p{color:#26003f}
+  html[data-theme="light"] footer{background:#eadcf1;color:#26003f;border-color:#d7bfdc}
+  html[data-theme="light"] ::-webkit-scrollbar-track{background:#fff5ef}html[data-theme="light"] ::-webkit-scrollbar-thumb{background:#4d0f78}
+</style>
+<style>
+.home-comments{padding:64px max(22px,calc((100vw - 1180px)/2));background:#24033c;color:#fff8f3}.home-comments-inner{max-width:1180px;margin:auto}.home-comments-head{display:flex;justify-content:space-between;align-items:end;gap:20px}.home-comments-head h2{margin:6px 0;font-size:clamp(1.8rem,4vw,2.6rem)}.home-comments-head span{color:#ffad73;font-size:.72rem;font-weight:900;letter-spacing:.15em}.home-comments-form{display:grid;gap:9px;margin:22px 0;padding:18px;border:1px solid #67437d;border-radius:14px;background:#321052}.home-comments textarea{min-height:100px;border:1px solid #76528d;border-radius:9px;background:#20003b;color:#fff;padding:12px;font:inherit}.home-comments button{border:0;border-radius:8px;background:#ffad73;color:#26003f;padding:10px 14px;font-weight:900;cursor:pointer}.home-comments-list{display:grid;gap:10px}.home-comment{padding:16px;border:1px solid #67437d;border-radius:12px;background:#321052}.home-comment header{display:flex;justify-content:space-between;gap:12px}.home-comment p{line-height:1.65}.home-comment small,.home-comment-empty{color:#cdbbd8}.home-comment-empty{padding:25px;text-align:center;border:1px dashed #76528d;border-radius:12px}.home-comment-message{display:none;padding:11px;border-radius:8px;background:#17452c}.footer-social{display:flex;flex-wrap:wrap;gap:8px}.footer-social a{display:none;border:1px solid #6b4385;border-radius:999px;padding:5px 9px}@media(max-width:620px){.home-comments-head{align-items:stretch;flex-direction:column}}
+.global-social-bar{position:fixed;right:14px;top:50%;z-index:850;transform:translateY(-50%)}.dock-tools{display:grid;justify-items:center;gap:7px;padding:8px;border:1px solid rgba(255,255,255,.22);border-radius:24px;background:linear-gradient(145deg,rgba(44,12,67,.84),rgba(25,2,42,.74));box-shadow:0 18px 50px rgba(16,0,28,.36);backdrop-filter:blur(20px)}.dock-tools a,.dock-tools button{display:grid;width:43px;height:43px;place-items:center;border:1px solid rgba(255,255,255,.15);border-radius:14px;background:rgba(255,255,255,.08);color:#fff;cursor:pointer}.dock-tools a[data-social]{display:none}.dock-tools svg{width:21px;height:21px}.dock-status{display:flex;align-items:center;gap:5px;color:#d8c8e4;font-size:.58rem;text-transform:uppercase}.dock-status i{width:7px;height:7px;border-radius:50%;background:#3ee889;box-shadow:0 0 9px #3ee889}.dock-mobile-toggle{display:none}.legacy-search{position:fixed;inset:0;z-index:1300;display:none;place-items:start center;padding:8vh 20px;background:rgba(13,0,24,.84);backdrop-filter:blur(16px)}.legacy-search.open{display:grid}.legacy-search>div{width:min(760px,100%);max-height:80vh;overflow:auto;padding:18px;border:1px solid #6b4385;border-radius:20px;background:#260440}.legacy-search header{display:flex;gap:10px}.legacy-search input{flex:1;border:1px solid #6b4385;border-radius:9px;background:#321052;color:#fff;padding:13px}.legacy-search-results{display:grid;gap:8px;margin-top:14px}.legacy-search-results a{padding:10px;border-radius:8px;background:#321052}@media(max-width:620px){.global-social-bar{right:14px;top:auto;bottom:14px;transform:none}.dock-mobile-toggle{display:grid;width:52px;height:52px;place-items:center;border:1px solid #76528d;border-radius:50%;background:#321052;color:#ffad73}.dock-tools{position:absolute;right:2px;bottom:60px;opacity:0;visibility:hidden;transform:translateY(10px);transition:.2s}.global-social-bar.open .dock-tools{opacity:1;visibility:visible;transform:none}.dock-status span{display:none}}
+</style>
+<style>.global-social-bar [data-social]{display:none!important}.legacy-social-strip{display:flex;align-items:center;justify-content:space-between;gap:25px;padding:34px max(22px,calc((100vw - 1180px)/2));border-top:1px solid #6b4385;background:#20003b;color:#fff}.legacy-social-strip h2{margin:5px 0}.legacy-social-strip nav{display:flex;flex-wrap:wrap;gap:9px}.legacy-social-strip a{display:flex!important;align-items:center;gap:7px;padding:9px 13px;border:1px solid currentColor;border-radius:999px}.legacy-social-strip [data-social="facebook"]{color:#1877f2}.legacy-social-strip [data-social="tiktok"]{color:#fff;text-shadow:-1px 0 #25f4ee,1px 0 #fe2c55}.legacy-social-strip [data-social="youtube"]{color:#f00}.legacy-social-strip [data-social="audiomack"]{color:#ffa200}@media(max-width:650px){.legacy-social-strip{align-items:flex-start;flex-direction:column}}</style>
+</head>
+<body>
+<aside class="global-social-bar" id="globalUtilityDock" aria-label="Website utility dock"><button class="dock-mobile-toggle" id="dockMobileToggle" aria-label="Open utility dock">☰</button><div class="dock-tools"><div class="dock-status"><i id="dockStatusDot"></i><span id="dockStatusText">online</span></div><a data-social="facebook" aria-label="Follow us on Facebook" title="Follow us on Facebook">f</a><a data-social="tiktok" aria-label="Follow us on TikTok" title="Follow us on TikTok">♪</a><a data-social="youtube" aria-label="Subscribe on YouTube" title="Subscribe on YouTube">▶</a><a data-social="audiomack" aria-label="Listen on Audiomack" title="Listen on Audiomack">A</a><button id="dockSearch" aria-label="Search Tiv Songs" title="Search">⌕</button><button id="dockShare" aria-label="Share Tiv Songs" title="Share website">↗</button><a id="dockReport" href="mailto:support@tivsongs.com" aria-label="Report an issue" title="Report issue">!</a><button id="dockTop" aria-label="Scroll to top" title="Scroll to top" hidden>↑</button></div></aside>
+<div class="legacy-search" id="legacySearch" role="dialog" aria-modal="true" aria-label="Global search"><div><header><input id="legacySearchInput" type="search" placeholder="Search songs, artists, videos, community and heritage…" aria-label="Search the entire website"><button id="legacySearchClose" aria-label="Close search">×</button></header><div class="legacy-search-results" id="legacySearchResults"></div></div></div>
+
+<header>
+  <div class="wrap nav-inner">
+    <a href="#" class="brand">
+      <img class="brand-logo" src="assets/tiv-song-logo.jpeg" alt="Tiv Songs logo">
+      Tiv Songs
+    </a>
+    <nav class="links">
+      <a href="#home" class="active">Home</a>
+      <a href="#songs">Songs</a>
+      <a href="#videos">Videos</a>
+      <a href="#artists">Artists</a>
+      <a href="/kings">Tor Tiv</a>
+      <a href="governors.html">Governors</a>
+      <a href="/community">Community</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="icon-btn" id="themeToggle" title="Toggle light / dark mode" aria-label="Toggle theme">
+        <svg id="themeIcon" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+      <div class="search-wrap">
+        <button class="icon-btn search-trigger" id="searchTrigger" title="Search Tiv Songs" aria-label="Open search" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
+        <form class="search-panel" id="searchPanel" role="search">
+          <input id="siteSearch" type="search" placeholder="Search songs, artists and culture…" aria-label="Search Tiv Songs">
+          <button class="search-submit" aria-label="Submit search"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></button>
+        </form>
+      </div>
+      <div class="account-menu-wrap"><button class="account-btn" id="accountMenuButton" type="button" aria-label="Open account menu" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button><div class="account-dropdown" id="accountDropdown" role="menu"></div></div>
+      <button class="icon-btn burger" id="menuToggle" aria-label="Menu" aria-expanded="false">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+  <nav class="mobile-menu" id="mobileMenu" aria-label="Mobile primary"><a href="/">Home</a><a href="/#songs">Songs</a><a href="/#videos">Videos</a><a href="/#artists">Artists</a><a href="/kings">Tor Tiv</a><a href="/governors.html">Governors</a><a href="/community">Community</a></nav>
+  <div class="stripes"></div>
+</header>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-glow"></div>
+  <div class="wrap hero-content hero-carousel"><div class="hero-slides" id="heroSlides">
+    <article class="hero-slide active"><div><div class="eyebrow"><span class="dot"></span> Benue State · Nigeria</div><h1>The home of <span>Tiv music</span> &amp; culture.</h1><p class="sub">Stream, discover and preserve authentic Tiv sound for generations.</p><a class="btn btn-gold" href="#songs">Explore songs</a></div><div class="hero-picture"><img src="assets/tiv-song-logo.jpeg" alt="Tiv Songs identity"></div></article>
+    <article class="hero-slide"><div><div class="eyebrow"><span class="dot"></span> Listen your way</div><h1>Three <span>download qualities.</span></h1><p class="sub">Choose high, medium or low quality to match your device and data plan.</p><a class="btn btn-gold" href="#songs">Choose a song</a></div><div class="hero-picture"><img src="assets/tiv-song-logo.jpeg" alt="Tiv Songs music collection"></div></article>
+    <article class="hero-slide"><div><div class="eyebrow"><span class="dot"></span> Royal heritage</div><h1>Meet the <span>Tor Tiv.</span></h1><p class="sub">Explore a protected digital record of Tiv leadership and cultural memory.</p><a class="btn btn-gold" href="/kings">Explore kings</a></div><div class="hero-picture"><img src="assets/kings/james-ayatse.jpg" alt="Tor Tiv royal heritage"></div></article>
+    <article class="hero-slide"><div><div class="eyebrow"><span class="dot"></span> Civic history</div><h1>Leadership through <span>the years.</span></h1><p class="sub">Discover the people and public service stories that shaped Benue State.</p><a class="btn btn-gold" href="/governors.html">Explore governors</a></div><div class="hero-picture"><img src="assets/governors/hyacinth-alia.png" alt="Benue civic leadership archive"></div></article>
+    <article class="hero-slide"><div><div class="eyebrow"><span class="dot"></span> Built by the community</div><h1>Upload. Review. <span>Preserve.</span></h1><p class="sub">Create a private account, submit your work, and publish after administrator approval.</p><a class="btn btn-gold" href="/account">Create account</a></div><div class="hero-picture"><img src="assets/kings/makir-zakpe.jpg" alt="Tiv cultural archive"></div></article>
+  </div><div class="hero-dots" id="heroDots" aria-label="Hero highlights"></div></div>
+  <div class="wrap hero-content" hidden><div class="hero-layout"><div>
+    <div class="eyebrow"><span class="dot"></span> Benue State · Nigeria</div>
+    <h1>The home of<br><em>Tiv</em> music &amp; culture.</h1>
+    <p class="sub">Stream, download, and help preserve Tiv music, language, and heritage — from Swange rhythms to the story of every Tor Tiv — built by the community, for the community.</p>
+    <div class="hero-stats">
+      <div><span class="n mono">12,400+</span><span class="l">Songs Archived</span></div>
+      <div><span class="n mono">38</span><span class="l">Tor Tiv Chronicled</span></div>
+      <div><span class="n mono">860+</span><span class="l">Artists</span></div>
+      <div><span class="n mono">190K</span><span class="l">Monthly Listeners</span></div>
+    </div></div><div class="hero-logo-shell" aria-hidden="true"><img src="assets/tiv-song-logo.jpeg" alt=""></div></div>
+  </div>
+</section>
+<a class="donation-float visible" id="donationButton" href="/account" title="Support the preservation of Tiv music and culture">Donate to Tiv Songs</a>
+<dialog class="donation-dialog" id="donationDialog" aria-labelledby="donationTitle">
+  <div class="donation-card">
+    <div class="donation-head"><div><span class="section-eyebrow">Support the archive</span><h2 id="donationTitle">Make a donation</h2></div><button class="donation-close" id="donationClose" type="button" aria-label="Close donation details">×</button></div>
+    <p class="donation-message" id="donationMessage">Support the preservation of Tiv music and culture.</p>
+    <div class="donation-details">
+      <div class="donation-detail"><span>Bank</span><strong id="donationBank">Account details will be added by the Super Admin.</strong></div>
+      <div class="donation-detail"><span>Account name</span><strong id="donationAccountName">Not configured yet</strong></div>
+      <div class="donation-detail"><span>Account number</span><div class="donation-account-row"><strong id="donationAccountNumber">Not configured yet</strong><button class="copy-account" id="copyDonationAccount" type="button" disabled>Copy</button></div></div>
+    </div>
+    <a class="donation-payment-link" id="donationPaymentLink" href="#" target="_blank" rel="noopener noreferrer">Pay securely online</a>
+    <p class="donation-note">Confirm the account name in your banking app before completing a transfer.</p>
+  </div>
+</dialog>
+
+<!-- TOR TIV HERITAGE -->
+<section id="heritage">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="section-eyebrow">The Tor Tiv Dynasty</span>
+        <h2>A living timeline of leadership</h2>
+      </div>
+      <a class="see-all" href="#">Explore full archive →</a>
+    </div>
+  </div>
+  <div class="wrap timeline-outer">
+    <div class="timeline-scroll" id="torTimeline">
+      <!-- cards injected -->
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED ARTISTS -->
+<section id="artists">
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <span class="section-eyebrow">Featured</span>
+        <h2>Artists carrying the sound forward</h2>
+      </div>
+      <a class="see-all" href="#">View all artists →</a>
+    </div>
+    <div class="artist-grid" id="artistGrid"></div>
+  </div>
+</section>
+
+<!-- CATEGORIES -->
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div><span class="section-eyebrow">Browse</span><h2>Music categories</h2></div>
+    </div>
+    <div class="cat-grid" id="catGrid"></div>
+  </div>
+</section>
+
+<!-- POPULAR SONGS -->
+<section id="songs">
+  <div class="wrap">
+    <div class="section-head">
+      <div><span class="section-eyebrow">This Week</span><h2>Popular songs</h2></div>
+      <a class="see-all" href="#">See Top 100 →</a>
+    </div>
+    <div class="song-list" id="songList"></div>
+  </div>
+</section>
+
+<!-- VIDEOS -->
+<section id="videos">
+  <div class="wrap">
+    <div class="section-head">
+      <div><span class="section-eyebrow">Watch</span><h2>Latest videos</h2></div>
+      <a class="see-all" href="#">Browse videos →</a>
+    </div>
+    <div class="video-grid" id="videoGrid"></div>
+  </div>
+</section>
+
+<!-- COMMUNITY -->
+<section id="community">
+  <div class="wrap">
+    <div class="section-head">
+      <div><span class="section-eyebrow">Leaderboard</span><h2>Top contributors this month</h2></div>
+    </div>
+    <div class="leader-list" id="leaderList"></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-band">
+  <div class="wrap">
+    <h2>Your song belongs in this archive.</h2>
+    <p>Upload traditional recordings, modern releases, or field recordings of ceremonies — every upload helps preserve Tiv culture for the next generation.</p>
+    <div class="cta-actions">
+      <a href="/account" class="btn btn-gold">Upload Your Music</a>
+      <a href="/account" class="btn btn-outline-white">Become a Verified Artist</a>
+    </div>
+  </div>
+</section>
+
+<section class="home-comments" aria-labelledby="homeCommentsTitle">
+  <div class="home-comments-inner">
+    <div class="home-comments-head"><div><span>COMMUNITY VOICES</span><h2 id="homeCommentsTitle">Join the conversation</h2><p>Comments are reviewed by an administrator before publication.</p></div><label>Sort <select id="homeCommentSort"><option value="newest">Newest</option><option value="oldest">Oldest</option><option value="liked">Most liked</option></select></label></div>
+    <p class="home-comment-message" id="homeCommentMessage" role="status"></p>
+    <form class="home-comments-form" id="homeCommentForm"><label for="homeCommentBody">Share a respectful comment</label><textarea id="homeCommentBody" name="body" minlength="2" maxlength="3000" required placeholder="Add to the conversation…"></textarea><div><button type="submit">Submit for review</button></div></form>
+    <div class="home-comments-list" id="homeCommentsList"><div class="home-comment-empty">Loading comments…</div></div>
+  </div>
+</section>
+
+<section class="legacy-social-strip" aria-label="Official Tiv Songs social media"><div><small>FOLLOW TIV SONGS</small><h2>Connect with the official community.</h2></div><nav><a data-social="facebook">Facebook</a><a data-social="tiktok">TikTok</a><a data-social="youtube">YouTube</a><a data-social="audiomack">Audiomack</a></nav></section>
+<footer>
+  <div class="wrap">
+    <div class="stripes-v" style="display:none;"></div>
+    <div class="footer-grid">
+      <div class="footer-col">
+        <div class="brand" style="margin-bottom:14px;">
+          <img class="brand-logo" src="assets/tiv-song-logo.jpeg" alt="Tiv Songs logo">Tiv Songs
+        </div>
+        <p style="font-size:.85rem; color:var(--text-dim); max-width:280px; line-height:1.6;">The definitive digital home for Tiv music, artists, history, and cultural heritage.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Explore</h5>
+        <a href="#songs">Songs</a><a href="#videos">Videos</a><a href="#artists">Artists</a><a href="/kings">Tor Tiv</a>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <a href="#">About</a><a href="#">Contact</a><a href="#">Privacy Policy</a><a href="#">Terms of Service</a>
+      </div>
+      <div class="footer-col">
+        <h5>Connect</h5>
+        <span>Official Tiv Songs links are available in the floating utility dock.</span>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 Tiv Songs. All rights reserved.</span>
+      <span class="mono">Made for the Tiv nation 🖤🤍</span>
+    </div>
+  </div>
+</footer>
+<footer class="tiv-site-footer"><div class="tiv-footer-inner"><div class="tiv-footer-identity"><a class="tiv-footer-brand" href="/"><img src="/assets/tiv-song-logo.jpeg" alt="Tiv Songs">TIV SONGS</a><p>The digital home of Tiv music, people, history and cultural heritage.</p></div><nav class="tiv-footer-links" aria-label="Footer navigation"><div><strong>Explore</strong><a href="/#songs">Songs</a><a href="/#videos">Videos</a><a href="/#artists">Artists</a></div><div><strong>Culture</strong><a href="/kings">Tor Tiv</a><a href="/governors.html">Governors</a><a href="/community">Community</a></div><div><strong>Contribute</strong><a href="/account">Account</a><a href="/account?mode=register">Register</a><a href="/community#share">Share activity</a></div></nav></div><div class="tiv-footer-bottom"><span>© 2026 Tiv Songs. All rights reserved.</span><span>Where real music and culture live.</span></div></footer>
+
+<script>
+// ---- Theme toggle ----
+const root = document.documentElement;
+const toggle = document.getElementById('themeToggle');
+const icon = document.getElementById('themeIcon');
+function setTheme(t){
+  icon.innerHTML = t === 'dark'
+    ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>'
+    : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+}
+setTheme(window.TivTheme.get());
+toggle.addEventListener('click', () => {
+  setTheme(window.TivTheme.toggle());
+});
+window.addEventListener('tiv-theme-change', event => setTheme(event.detail));
+
+// ---- Responsive primary menu ----
+const menuToggle=document.getElementById('menuToggle');
+const mobileMenu=document.getElementById('mobileMenu');
+menuToggle.addEventListener('click',()=>{
+  const open=mobileMenu.classList.toggle('open');
+  menuToggle.setAttribute('aria-expanded',String(open));
+});
+mobileMenu.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>mobileMenu.classList.remove('open')));
+
+// ---- Account icon menu ----
+const accountMenuButton=document.getElementById('accountMenuButton');
+const accountDropdown=document.getElementById('accountDropdown');
+const accountAuthenticated=Boolean(sessionStorage.getItem('tiv-account-auth'));
+accountDropdown.innerHTML=accountAuthenticated
+  ?'<a role="menuitem" href="/account">Dashboard</a><a role="menuitem" href="/account#profile">Profile</a>'
+  :'<a role="menuitem" href="/account">Login</a><a role="menuitem" href="/account?mode=register">Register</a>';
+accountMenuButton.addEventListener('click',()=>{
+  const open=accountDropdown.classList.toggle('open');
+  accountMenuButton.setAttribute('aria-expanded',String(open));
+});
+document.addEventListener('click',event=>{
+  if(!event.target.closest('.account-menu-wrap')){
+    accountDropdown.classList.remove('open');
+    accountMenuButton.setAttribute('aria-expanded','false');
+  }
+});
+
+// ---- Five key highlights, advancing every five seconds ----
+const heroSlides=[...document.querySelectorAll('.hero-slide')];
+const heroDots=document.getElementById('heroDots');
+let heroIndex=0;
+let heroTimer;
+function showHeroSlide(next){
+  heroSlides[heroIndex].classList.remove('active');
+  heroSlides[heroIndex].classList.add('leaving');
+  window.setTimeout(()=>heroSlides.forEach(slide=>slide.classList.remove('leaving')),750);
+  heroIndex=(next+heroSlides.length)%heroSlides.length;
+  heroSlides[heroIndex].classList.add('active');
+  [...heroDots.children].forEach((dot,index)=>dot.classList.toggle('active',index===heroIndex));
+}
+heroSlides.forEach((_,index)=>{
+  const dot=document.createElement('button');
+  dot.className=`hero-dot${index===0?' active':''}`;
+  dot.setAttribute('aria-label',`Show highlight ${index+1}`);
+  dot.addEventListener('click',()=>{showHeroSlide(index);window.clearInterval(heroTimer);heroTimer=window.setInterval(()=>showHeroSlide(heroIndex+1),5000)});
+  heroDots.appendChild(dot);
+});
+if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)heroTimer=window.setInterval(()=>showHeroSlide(heroIndex+1),5000);
+
+// ---- Public donation campaign ----
+const donationButton=document.getElementById('donationButton');
+const donationDialog=document.getElementById('donationDialog');
+const donationClose=document.getElementById('donationClose');
+const donationMessage=document.getElementById('donationMessage');
+const donationBank=document.getElementById('donationBank');
+const donationAccountName=document.getElementById('donationAccountName');
+const donationAccountNumber=document.getElementById('donationAccountNumber');
+const copyDonationAccount=document.getElementById('copyDonationAccount');
+const donationPaymentLink=document.getElementById('donationPaymentLink');
+let donationAccount="";
+donationButton.addEventListener('click',event=>{
+  event.preventDefault();
+  donationDialog.showModal();
+});
+donationClose.addEventListener('click',()=>donationDialog.close());
+donationDialog.addEventListener('click',event=>{if(event.target===donationDialog)donationDialog.close()});
+copyDonationAccount.addEventListener('click',async()=>{
+  if(!donationAccount)return;
+  try{
+    await navigator.clipboard.writeText(donationAccount);
+    copyDonationAccount.textContent='Copied';
+    window.setTimeout(()=>copyDonationAccount.textContent='Copy',1800);
+  }catch{
+    copyDonationAccount.textContent='Select and copy';
+  }
+});
+fetch('/api/donation').then(response=>response.ok?response.json():Promise.reject()).then(donation=>{
+  donationButton.classList.toggle('visible',donation.enabled!==false);
+  if(donation.enabled===false)return;
+  donationMessage.textContent=donation.message||'Support the preservation of Tiv music and culture.';
+  donationBank.textContent=donation.bankName||'Account details will be added by the Super Admin.';
+  donationAccountName.textContent=donation.accountName||'Not configured yet';
+  donationAccountNumber.textContent=donation.accountNumber||'Not configured yet';
+  donationAccount=donation.accountNumber||'';
+  copyDonationAccount.disabled=!donationAccount;
+  if(donation.paymentLink){
+    donationPaymentLink.href=donation.paymentLink;
+    donationPaymentLink.classList.add('visible');
+  }
+  donationButton.title=[donation.message,donation.bankName,donation.accountName,donation.accountNumber].filter(Boolean).join(' · ');
+}).catch(()=>undefined);
+
+// ---- Logo search ----
+const searchTrigger = document.getElementById('searchTrigger');
+const searchPanel = document.getElementById('searchPanel');
+const siteSearch = document.getElementById('siteSearch');
+searchTrigger.addEventListener('click', () => {
+  const isOpen = searchPanel.classList.toggle('open');
+  searchTrigger.setAttribute('aria-expanded', isOpen);
+  if (isOpen) siteSearch.focus();
+});
+document.addEventListener('click', event => {
+  if (!event.target.closest('.search-wrap')) {
+    searchPanel.classList.remove('open');
+    searchTrigger.setAttribute('aria-expanded', 'false');
+  }
+});
+searchPanel.addEventListener('submit', event => {
+  event.preventDefault();
+  const query = siteSearch.value.trim().toLowerCase();
+  if (!query) return;
+  const match = [...document.querySelectorAll('.song-title,.song-artist,.artist-card h4,.cat-card span')]
+    .find(element => element.textContent.toLowerCase().includes(query));
+  if (match) match.closest('.song-row,.artist-card,.cat-card').scrollIntoView({behavior:'smooth',block:'center'});
+});
+
+// ---- Verified heritage data ----
+const torTivs = [
+  {n:"01", name:"Makir Zakpe", reign:"1946 – 1956", image:"assets/kings/makir-zakpe.jpg", bio:"Tor Tiv I and the first paramount ruler of the Tiv people."},
+  {n:"02", name:"Gondo Aluor", reign:"1956 – 1978", initials:"GA", bio:"Tor Tiv II, teacher and former chief scribe of the Tiv Native Authority."},
+  {n:"03", name:"James Akperan Orshi", reign:"1979 – 1990", initials:"JAO", bio:"Tor Tiv III, remembered through the institution that bears his name."},
+  {n:"04", name:"Alfred Akawe Torkula", reign:"1991 – 2015", image:"assets/kings/alfred-torkula.jpg", bio:"Tor Tiv IV, who served the nation for more than twenty-four years."},
+  {n:"05", name:"Prof. James Ayatse", reign:"2017 – Present", image:"assets/kings/james-ayatse.jpg", bio:"Tor Tiv V and current chairman of the Benue State Council of Chiefs."}
+];
+const torWrap = document.getElementById('torTimeline');
+torTivs.forEach(t=>{
+  torWrap.innerHTML += `
+  <div class="tor-card reveal">
+    <div class="tor-portrait">${t.image ? `<img src="${t.image}" alt="Portrait of ${t.name}" loading="lazy">` : `<div class="tor-archive"><div><strong>${t.initials}</strong><small>Archival portrait pending</small></div></div>`}<span class="tor-number">Tor Tiv ${t.n}</span></div>
+    <div class="tor-body">
+      <h3>${t.name}</h3>
+      <span class="tor-reign">${t.reign}</span>
+      <p class="tor-bio">${t.bio}</p>
+      <span class="tor-read">Read full story →</span>
+    </div>
+  </div>`;
+});
+
+const artists = [
+  {name:"Terver Orpin", meta:"210K followers · 48 songs", v:true},
+  {name:"Doosuur Swange", meta:"178K followers · 32 songs", v:true},
+  {name:"Aondohemba", meta:"94K followers · 21 songs", v:false},
+  {name:"Mimi Orshi", meta:"152K followers · 60 songs", v:true},
+  {name:"Iyorwuese Boys", meta:"67K followers · 18 songs", v:false},
+  {name:"Kwaghhir Ensemble", meta:"41K followers · 12 songs", v:false},
+];
+const artistGrid = document.getElementById('artistGrid');
+artists.forEach(a=>{
+  artistGrid.innerHTML += `
+  <div class="artist-card reveal">
+    <div class="artist-photo">${a.v ? '<div class="verify">✓</div>' : ''}</div>
+    <h4>${a.name}</h4>
+    <div class="artist-meta">${a.meta}</div>
+    <button class="follow-btn">Follow</button>
+  </div>`;
+});
+
+const cats = [
+  {name:"Traditional Songs", c1:"#8B1E24", c2:"#4a0f13"},
+  {name:"Swange", c1:"#C89B3C", c2:"#6b4423"},
+  {name:"Gospel", c1:"#6B4423", c2:"#2c1b0e"},
+  {name:"Cultural Dance", c1:"#8B1E24", c2:"#C89B3C"},
+  {name:"Wedding Songs", c1:"#C89B3C", c2:"#8B1E24"},
+  {name:"Burial Songs", c1:"#2b2b2b", c2:"#111111"},
+  {name:"Praise Songs", c1:"#6B4423", c2:"#C89B3C"},
+  {name:"Modern Tiv Music", c1:"#111111", c2:"#8B1E24"},
+];
+const catGrid = document.getElementById('catGrid');
+cats.forEach(c=>{
+  catGrid.innerHTML += `
+  <div class="cat-card reveal" style="background:linear-gradient(140deg, ${c.c1}, ${c.c2});"><span>${c.name}</span></div>`;
+});
+
+const songs = [
+  {title:"Doo M Tsan", artist:"Terver Orpin", dur:"3:42", dl:"12.4K", views:"88K"},
+  {title:"Swange Anger", artist:"Doosuur Swange", dur:"4:10", dl:"9.8K", views:"64K"},
+  {title:"Msugh U Ken Tar", artist:"Mimi Orshi", dur:"3:15", dl:"7.2K", views:"51K"},
+  {title:"Ivom I Tiv", artist:"Aondohemba", dur:"5:02", dl:"6.5K", views:"40K"},
+  {title:"Kwaghhir Nightfall", artist:"Kwaghhir Ensemble", dur:"3:58", dl:"5.1K", views:"33K"},
+];
+const songList = document.getElementById('songList');
+songs.forEach((s,i)=>{
+  songList.innerHTML += `
+  <div class="song-row reveal">
+    <span class="song-idx mono">${String(i+1).padStart(2,'0')}</span>
+    <div class="song-art"></div>
+    <div>
+      <div class="song-title">${s.title}</div>
+      <div class="song-artist">${s.artist}</div>
+    </div>
+    <div class="song-stats">
+      <span>${s.views} views</span><span>${s.dl} downloads</span><span>${s.dur}</span>
+    </div>
+    <div class="song-actions">
+      <button class="play-btn"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+    </div>
+  </div>`;
+});
+
+const videos = [
+  {title:"Swange Live at Gboko Festival", meta:"142K views · 3 days ago", dur:"12:04"},
+  {title:"Interview: The Story of the Indyer Drum", meta:"38K views · 1 week ago", dur:"18:41"},
+  {title:"Tor Tiv Coronation Ceremony (Documentary)", meta:"210K views · 2 weeks ago", dur:"24:16"},
+  {title:"Aondohemba — Official Music Video", meta:"96K views · 4 days ago", dur:"4:32"},
+];
+const videoGrid = document.getElementById('videoGrid');
+videos.forEach(v=>{
+  videoGrid.innerHTML += `
+  <div class="video-card reveal">
+    <div class="video-thumb">
+      <span class="video-duration mono">${v.dur}</span>
+      <div class="video-play"><div class="video-play-circle"><svg width="16" height="16" viewBox="0 0 24 24" fill="#111"><path d="M8 5v14l11-7z"/></svg></div></div>
+    </div>
+    <div class="video-meta"><h4>${v.title}</h4><div class="vm-sub">${v.meta}</div></div>
+  </div>`;
+});
+
+const leaders = [
+  {name:"Terver Orpin", sub:"Verified Artist", score:"48 uploads"},
+  {name:"Doosuur Swange", sub:"Verified Artist", score:"32 uploads"},
+  {name:"Community: Gboko Archive Group", sub:"Top Uploader", score:"210 uploads"},
+  {name:"Mimi Orshi", sub:"Verified Artist", score:"60 uploads"},
+];
+const leaderList = document.getElementById('leaderList');
+leaders.forEach((l,i)=>{
+  leaderList.innerHTML += `
+  <div class="leader-row reveal">
+    <span class="leader-rank">#${i+1}</span>
+    <div class="leader-avatar"></div>
+    <div><div class="leader-name">${l.name}</div><div class="leader-sub">${l.sub}</div></div>
+    <span class="leader-score mono">${l.score}</span>
+  </div>`;
+});
+
+// ---- Scroll reveal ----
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// ---- Live API wiring (keeps the curated fallback content when the API is offline) ----
+const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({
+  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+}[character]));
+
+let liveSongs=[];
+function renderLiveSongs(items){
+  songList.innerHTML = items.map((song, index) => `
+    <div class="song-row reveal in" data-category="${escapeHtml(song.category?.slug||'')}">
+      <span class="song-idx mono">${String(index + 1).padStart(2, '0')}</span>
+      <div class="song-art"${song.artworkUrl ? ` style="background-image:url('${encodeURI(song.artworkUrl)}');background-size:cover"` : ''}></div>
+      <div>
+        <div class="song-title">${escapeHtml(song.title)}</div>
+        <div class="song-artist">${escapeHtml(song.artist?.stageName || 'Tiv Songs Artist')} · ${escapeHtml(song.category?.name||'Uncategorized')}</div>
+      </div>
+      <div class="song-stats">
+        <span>${escapeHtml(song.playCount || 0)} plays</span>
+        <span>${escapeHtml(song.downloadCount || 0)} downloads</span>
+        <span>${song.duration ? `${Math.floor(song.duration / 60)}:${String(song.duration % 60).padStart(2, '0')}` : 'New'}</span>
+      </div>
+      <div class="song-actions">
+        ${song.audioUrl ? `<a class="play-btn" href="${escapeHtml(song.audioUrl)}" aria-label="Play ${escapeHtml(song.title)}"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></a>` : ''}
+        ${song.audioUrl ? `<div class="download-menu"><button class="download-toggle" type="button" aria-expanded="false">Download ▾</button><div class="download-options">
+          <a href="${escapeHtml(song.audioUrl)}" download>High quality · 256 kbps</a>
+          ${song.audioMediumUrl?`<a href="${escapeHtml(song.audioMediumUrl)}" download>Medium quality · 128 kbps</a>`:''}
+          ${song.audioLowUrl?`<a href="${escapeHtml(song.audioLowUrl)}" download>Low quality · 64 kbps</a>`:''}
+        </div></div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+songList.addEventListener('click',event=>{
+  const toggle=event.target.closest('.download-toggle');
+  document.querySelectorAll('.download-menu.open').forEach(menu=>{if(menu!==toggle?.parentElement)menu.classList.remove('open')});
+  if(toggle){
+    const open=toggle.parentElement.classList.toggle('open');
+    toggle.setAttribute('aria-expanded',String(open));
+  }
+});
+
+async function loadLiveContent(){
+  const [songResult,videoResult,artistResult,categoryResult,heritageResult] = await Promise.allSettled([
+    fetch('/api/songs?limit=10').then(response => {
+      if (!response.ok) throw new Error('Songs unavailable');
+      return response.json();
+    }),
+    fetch('/api/videos?limit=12').then(response => {
+      if (!response.ok) throw new Error('Videos unavailable');
+      return response.json();
+    }),
+    fetch('/api/artists').then(response => {
+      if (!response.ok) throw new Error('Artists unavailable');
+      return response.json();
+    }),
+    fetch('/api/categories').then(response => {
+      if (!response.ok) throw new Error('Categories unavailable');
+      return response.json();
+    }),
+    fetch('/api/tor-tiv').then(response => {
+      if (!response.ok) throw new Error('Heritage unavailable');
+      return response.json();
+    })
+  ]);
+
+  if (songResult.status === 'fulfilled' && songResult.value.items?.length) {
+    liveSongs=songResult.value.items;
+    renderLiveSongs(liveSongs);
+  }
+
+  if(videoResult.status==='fulfilled'&&videoResult.value.items?.length){
+    videoGrid.innerHTML=videoResult.value.items.map(video=>`
+      <article class="video-card reveal in">
+        <div class="video-thumb"><video controls preload="metadata" src="${escapeHtml(video.videoUrl)}"></video></div>
+        <div class="video-meta"><h4>${escapeHtml(video.title)}</h4><div class="vm-sub">${escapeHtml(video.artist?.stageName||'Tiv Songs Artist')} · ${escapeHtml(video.category?.name||'Uncategorized')}</div></div>
+      </article>`).join('');
+  }
+
+  if(artistResult.status==='fulfilled'&&artistResult.value?.length){
+    artistGrid.innerHTML=artistResult.value.map(artist=>`
+      <div class="artist-card reveal in">
+        <div class="artist-photo"><div class="verify">✓</div></div>
+        <h4>${escapeHtml(artist.stageName)}</h4>
+        <div class="artist-meta">${escapeHtml(artist._count?.songs||0)} songs · ${escapeHtml(artist._count?.videos||0)} videos</div>
+      </div>`).join('');
+    leaderList.innerHTML=artistResult.value.slice(0,6).map((artist,index)=>`
+      <div class="leader-row reveal in">
+        <span class="leader-rank mono">${String(index+1).padStart(2,'0')}</span>
+        <div class="leader-avatar"></div>
+        <div><div class="leader-name">${escapeHtml(artist.stageName)}</div><div class="leader-sub">Verified Artist</div></div>
+        <span class="leader-score mono">${escapeHtml((artist._count?.songs||0)+(artist._count?.videos||0))} uploads</span>
+      </div>`).join('');
+  }
+
+  if(categoryResult.status==='fulfilled'&&categoryResult.value?.length){
+    catGrid.innerHTML=categoryResult.value.map((category,index)=>{
+      const palette=cats[index%cats.length];
+      const count=liveSongs.filter(song=>song.category?.slug===category.slug).length+
+        (videoResult.status==='fulfilled'?(videoResult.value.items||[]).filter(video=>video.category?.slug===category.slug).length:0);
+      return `<button class="cat-card reveal in" data-category="${escapeHtml(category.slug)}" style="background:linear-gradient(140deg,${palette.c1},${palette.c2});border:0;color:inherit;text-align:left"><span>${escapeHtml(category.name)} · ${count}</span></button>`;
+    }).join('');
+    catGrid.querySelectorAll('[data-category]').forEach(card=>card.addEventListener('click',()=>{
+      const category=card.dataset.category;
+      renderLiveSongs(liveSongs.filter(song=>song.category?.slug===category));
+      document.getElementById('songs').scrollIntoView({behavior:'smooth'});
+    }));
+  }
+
+  if (heritageResult.status === 'fulfilled' && heritageResult.value?.length) {
+    torWrap.innerHTML = heritageResult.value.map(tiv => {
+      const start = new Date(tiv.reignStart).getFullYear();
+      const end = tiv.reignEnd ? new Date(tiv.reignEnd).getFullYear() : 'Present';
+      const initials = tiv.name.split(' ').map(part => part[0]).join('').slice(0, 3);
+      return `<div class="tor-card reveal in">
+        <div class="tor-portrait">${tiv.portraitUrl ? `<img src="${escapeHtml(tiv.portraitUrl)}" alt="Portrait of ${escapeHtml(tiv.name)}" loading="lazy">` : `<div class="tor-archive"><div><strong>${escapeHtml(initials)}</strong><small>Archival portrait pending</small></div></div>`}<span class="tor-number">Tor Tiv ${String(tiv.ordinal).padStart(2, '0')}</span></div>
+        <div class="tor-body"><h3>${escapeHtml(tiv.name)}</h3><span class="tor-reign">${start} – ${end}</span><p class="tor-bio">${escapeHtml(tiv.biography)}</p><span class="tor-read">Read full story →</span></div>
+      </div>`;
+    }).join('');
+  }
+}
+
+loadLiveContent().catch(() => undefined);
+setInterval(()=>loadLiveContent().catch(()=>undefined),15000);
+window.addEventListener('focus',()=>loadLiveContent().catch(()=>undefined));
+
+// Keep the current landing-page section highlighted in the primary navigation.
+const sectionLinks=[...document.querySelectorAll('nav.links a[href^="#"]')].filter(link=>link.getAttribute('href').length>1);
+const sectionTargets=sectionLinks.map(link=>document.querySelector(link.getAttribute('href'))).filter(Boolean);
+const activeSectionObserver=new IntersectionObserver(entries=>{
+  const visible=entries.filter(entry=>entry.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];
+  if(!visible)return;
+  sectionLinks.forEach(link=>link.classList.toggle('active',link.getAttribute('href')===`#${visible.target.id}`));
+},{rootMargin:'-25% 0px -60% 0px',threshold:[0,.15,.4]});
+sectionTargets.forEach(section=>activeSectionObserver.observe(section));
+
+// CMS-managed social handles and moderated homepage comments.
+fetch('/api/cms/settings').then(response=>response.ok?response.json():null).then(settings=>{
+  const social=settings?.general?.socialLinks||{},managed=settings?.general?.socialMedia||[];
+  document.querySelectorAll('[data-social]').forEach(link=>{
+    const item=managed.find(entry=>entry.platform===link.dataset.social),url=item?.url||social[link.dataset.social];
+    if(item?.enabled!==false){link.style.display='grid';link.style.order=String(item?.order||0);if(url){link.href=url;link.target='_blank';link.rel='noopener noreferrer'}else{link.removeAttribute('href');link.setAttribute('aria-disabled','true')}}
+  });
+  const dock=settings?.utilityDock||{};document.getElementById('dockStatusText').textContent=dock.liveStatus||'online';document.getElementById('dockStatusDot').style.background=dock.liveStatus==='offline'?'#bbb':'#3ee889';document.getElementById('dockReport').href=dock.reportUrl||'mailto:support@tivsongs.com';
+}).catch(()=>undefined);
+const utilityDock=document.getElementById('globalUtilityDock'),legacySearch=document.getElementById('legacySearch'),legacySearchInput=document.getElementById('legacySearchInput'),legacySearchResults=document.getElementById('legacySearchResults');
+document.getElementById('dockMobileToggle').addEventListener('click',()=>utilityDock.classList.toggle('open'));
+document.getElementById('dockSearch').addEventListener('click',()=>{legacySearch.classList.add('open');legacySearchInput.focus()});
+document.getElementById('legacySearchClose').addEventListener('click',()=>legacySearch.classList.remove('open'));
+document.getElementById('dockShare').addEventListener('click',async()=>{if(navigator.share)await navigator.share({title:document.title,url:location.href}).catch(()=>undefined);else await navigator.clipboard.writeText(location.href)});
+document.getElementById('dockTop').addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
+addEventListener('scroll',()=>document.getElementById('dockTop').hidden=scrollY<300,{passive:true});
+let legacySearchTimer;legacySearchInput.addEventListener('input',()=>{clearTimeout(legacySearchTimer);const query=legacySearchInput.value.trim();if(query.length<2){legacySearchResults.innerHTML='';return}legacySearchTimer=setTimeout(()=>fetch(`/api/search?q=${encodeURIComponent(query)}`).then(response=>response.ok?response.json():{}).then(results=>{const matches=Object.entries(results).flatMap(([group,items])=>items.map(item=>({group,label:item.title||item.stageName||item.name||'Result'})));legacySearchResults.innerHTML=matches.length?matches.map(item=>`<a href="/?q=${encodeURIComponent(item.label)}"><small>${escapeHtml(item.group)}</small><br><strong>${escapeHtml(item.label)}</strong></a>`).join(''):'<p>No matching content found.</p>'}).catch(()=>undefined),220)});
+const homeCommentsList=document.getElementById('homeCommentsList');
+const homeCommentSort=document.getElementById('homeCommentSort');
+const homeCommentMessage=document.getElementById('homeCommentMessage');
+async function loadHomeComments(){
+  const response=await fetch(`/api/comments/community/homepage?sort=${homeCommentSort.value}`);
+  if(!response.ok)throw new Error();
+  const comments=await response.json();
+  homeCommentsList.innerHTML=comments.length?comments.map(comment=>`<article class="home-comment"><header><strong>${escapeHtml(comment.author?.displayName||'Tiv Songs member')}</strong><small>${new Date(comment.createdAt).toLocaleDateString()}</small></header><p>${escapeHtml(comment.body)}</p><small>${comment.likeCount} likes${comment.pinned?' · Pinned':''}</small></article>`).join(''):'<div class="home-comment-empty">No approved comments yet. Start the conversation.</div>';
+}
+homeCommentSort.addEventListener('change',()=>loadHomeComments().catch(()=>undefined));
+document.getElementById('homeCommentForm').addEventListener('submit',async event=>{
+  event.preventDefault();homeCommentMessage.style.display='none';
+  let response=await fetch('/api/comments',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({targetType:'community',targetId:'homepage',body:new FormData(event.currentTarget).get('body')})});
+  if(response.status===401){const refreshed=await fetch('/api/account/refresh',{method:'POST',credentials:'include',headers:{Origin:location.origin}});if(refreshed.ok)response=await fetch('/api/comments',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({targetType:'community',targetId:'homepage',body:new FormData(event.currentTarget).get('body')})})}
+  const result=await response.json().catch(()=>({}));
+  homeCommentMessage.textContent=response.ok?'Thank you. Your comment is awaiting administrator approval.':result.error||'Please sign in before commenting.';
+  homeCommentMessage.style.display='block';if(response.ok)event.currentTarget.reset();
+});
+loadHomeComments().catch(()=>{homeCommentsList.innerHTML='<div class="home-comment-empty">Comments are temporarily unavailable.</div>'});
+</script>
+</body>
+</html>
