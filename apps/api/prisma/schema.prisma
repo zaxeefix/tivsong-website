@@ -536,7 +536,6 @@ model LoginAttempt {
   @@index([email, createdAt])
   @@index([userId, createdAt])
   @@index([successful, createdAt])
-  @@index([successful, createdAt])
 }
 
 model UserWarning {
