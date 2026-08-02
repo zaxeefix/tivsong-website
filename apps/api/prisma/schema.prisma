@@ -579,5 +579,4 @@ model ContentReport {
   @@index([status, createdAt])
   @@index([targetType, targetId, status])
   @@index([reporterId, createdAt])
-  @@index([reporterId, createdAt])
 }
