@@ -10,10 +10,11 @@ import { errorHandler } from "./middleware/error.js";
 import {apiLogger} from "./platform/logger.js";
 
 export const app=express();
+const webOrigin=new URL(env.WEB_URL).origin;
 app.set("trust proxy",1);
 app.disable("x-powered-by");
 app.use(helmet({crossOriginResourcePolicy:{policy:"cross-origin"}}));
-app.use(cors({origin:env.WEB_URL,credentials:true}));
+app.use(cors({origin:webOrigin,credentials:true}));
 app.use(compression());
 app.use((req,res,next)=>{const started=performance.now();res.on("finish",()=>apiLogger.info({method:req.method,path:req.path,status:res.statusCode,durationMs:Math.round((performance.now()-started)*100)/100,ip:req.ip},"request completed"));next()});
 app.use(rateLimit({windowMs:60_000,limit:180,standardHeaders:"draft-8"}));
@@ -28,7 +29,7 @@ app.use((req,res,next)=>{
   if(["GET","HEAD","OPTIONS"].includes(req.method))return next();
   const origin=req.get("origin");
   const fetchSite=req.get("sec-fetch-site");
-  if((origin&&origin!==env.WEB_URL)||fetchSite==="cross-site")return void res.status(403).json({error:"Cross-site request rejected"});
+  if((origin&&origin!==webOrigin)||fetchSite==="cross-site")return void res.status(403).json({error:"Cross-site request rejected"});
   next();
 });
 app.use("/api",api);
