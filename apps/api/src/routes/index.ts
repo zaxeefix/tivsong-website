@@ -53,6 +53,11 @@ const communityUpload=multer({
     else done(new Error("Community activities accept one picture or video"));
   }
 });
+const registrationAvatarUpload=multer({
+  dest:temporaryDirectory,
+  limits:{fileSize:5*1024*1024,files:1},
+  fileFilter:(_req,file,done)=>file.mimetype.startsWith("image/")?done(null,true):done(new Error("Profile photo must be an image"))
+});
 const cmsMediaUpload=multer({
   dest:temporaryDirectory,
   limits:{fileSize:maximumUploadBytes,files:1},
@@ -297,7 +302,7 @@ const accountRegisterSchema=z.object({
   }
 });
 
-const accountLoginSchema=z.object({email:z.string().email(),password:z.string().min(8),remember:z.boolean().optional().default(false)});
+const accountLoginSchema=z.object({identifier:z.string().trim().min(3).max(254).optional(),email:z.string().email().optional(),password:z.string().min(8),remember:z.boolean().optional().default(false)}).refine(value=>Boolean(value.identifier||value.email),{message:"Username or email is required",path:["identifier"]});
 const accountSongSchema=z.object({
   title:z.string().min(2).max(160),
   categoryId:z.string().min(1),
@@ -497,8 +502,18 @@ api.get("/media/:kind/:file", async (req,res)=>{
   res.sendFile(path.join(directory,file));
 });
 
-api.post("/account/register",featureGate("registrationEnabled"), async (req, res) => {
-  const input=accountRegisterSchema.parse(req.body);
+api.post("/account/register",featureGate("registrationEnabled"),registrationAvatarUpload.single("avatar"),async (req, res) => {
+  let avatarUrl=String(req.body.avatarUrl||"");
+  if(req.file){
+    try{
+      await validateUploadedFile(req.file.path,"image");
+      const optimized=await optimizeCommunityMedia(req.file.path,req.file.mimetype);
+      avatarUrl=optimized.relativePath;
+      await prisma.mediaAsset.create({data:{name:`Profile photo ${randomUUID()}`,folder:"/profiles",kind:"image",mimeType:"image/webp",url:avatarUrl,storageKey:path.basename(avatarUrl),sizeBytes:optimized.storedBytes,altText:"Contributor profile photo",uploadedBy:"account-registration"}});
+    }catch(error){await rm(req.file.path,{force:true}).catch(()=>undefined);throw error}
+  }
+  const parseJson=(value:unknown,fallback:unknown)=>{if(typeof value!=="string")return value??fallback;try{return JSON.parse(value)}catch{return fallback}};
+  const input=accountRegisterSchema.parse({...req.body,avatarUrl,socialLinks:parseJson(req.body.socialLinks,undefined),supportingDocuments:parseJson(req.body.supportingDocuments,undefined)});
   if(input.accountType==="artist"){
     const website=await prisma.setting.findUnique({where:{key:"website"}});
     if((website?.value as {system?:Record<string,boolean>}|null)?.system?.artistRegistrationEnabled===false){
@@ -566,18 +581,19 @@ api.post("/account/register",featureGate("registrationEnabled"), async (req, res
 
 api.post("/account/login", async (req, res) => {
   const input=accountLoginSchema.parse(req.body);
-  const email=input.email.toLowerCase();
-  const user=await prisma.user.findUnique({
-    where:{email},
+  const identifier=(input.identifier||input.email!).toLowerCase();
+  const user=await prisma.user.findFirst({
+    where:{OR:[{email:identifier},{username:identifier}]},
     include:{artist:true,roles:{include:{role:true}}}
   });
+  const auditIdentifier=user?.email||identifier;
   const userAgent=req.get("user-agent")?.slice(0,500)||null;
   const browser=userAgent?.match(/(Edg|Chrome|Firefox|Safari)\/[\d.]+/)?.[1]||null;
   const device=userAgent?(/mobile|android|iphone|ipad/i.test(userAgent)?"Mobile":"Desktop"):null;
-  const logAttempt=(successful:boolean,failure?:string)=>prisma.loginAttempt.create({data:{userId:user?.id||null,email,successful,ipAddress:req.ip||null,userAgent,device,browser,country:req.get("cf-ipcountry")?.slice(0,2)||null,failure:failure||null}});
+  const logAttempt=(successful:boolean,failure?:string)=>prisma.loginAttempt.create({data:{userId:user?.id||null,email:auditIdentifier,successful,ipAddress:req.ip||null,userAgent,device,browser,country:req.get("cf-ipcountry")?.slice(0,2)||null,failure:failure||null}});
   if(!user?.passwordHash||!(await bcrypt.compare(input.password,user.passwordHash))){
     await logAttempt(false,"INVALID_CREDENTIALS");
-    return void res.status(401).json({error:"Invalid email or password"});
+    return void res.status(401).json({error:"Invalid username, email or password"});
   }
   if(user.status==="SUSPENDED"&&user.suspendedUntil&&user.suspendedUntil<=new Date()){
     await prisma.user.update({where:{id:user.id},data:{status:"ACTIVE",suspendedAt:null,suspendedUntil:null,suspensionReason:null}});
@@ -603,7 +619,7 @@ api.post("/account/login", async (req, res) => {
   await prisma.$transaction([
     prisma.session.create({data:{id:sessionId,userId:user.id,refreshTokenHash:tokenHash(refreshToken),expiresAt:new Date(Date.now()+env.REFRESH_TOKEN_DAYS*86_400_000),userAgent,ipAddress:req.ip||null}}),
     prisma.user.update({where:{id:user.id},data:{lastLoginAt:new Date(),lastActivityAt:new Date()}}),
-    prisma.loginAttempt.create({data:{userId:user.id,email,successful:true,ipAddress:req.ip||null,userAgent,device,browser,country:req.get("cf-ipcountry")?.slice(0,2)||null}})
+    prisma.loginAttempt.create({data:{userId:user.id,email:user.email,successful:true,ipAddress:req.ip||null,userAgent,device,browser,country:req.get("cf-ipcountry")?.slice(0,2)||null}})
   ]);
   res.cookie(accountCookie,token,accessCookieOptions);
   res.cookie(accountRefreshCookie,refreshToken,refreshCookieOptions(input.remember));

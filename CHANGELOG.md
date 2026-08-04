@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.1 — 2026-08
+
+### Improved
+
+- Device-based profile-photo registration with signature validation, a 5 MB limit and WebP optimization
+- Dependent country, Nigerian state and Benue local-government dropdowns
+- Member sign-in by username or email while administrator sign-in remains email-only
+- Live CMS-managed homepage hero rotation with image/video slides and no logo inside the hero
+- Consistent Tiv Songs logo for site identity, favicon and route loading
+
 ## 1.1.0 — 2026-08
 
 ### Added
