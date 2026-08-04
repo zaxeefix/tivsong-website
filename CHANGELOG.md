@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.2 — 2026-08
+
+### Fixed
+
+- Render database deployment now retries transient PostgreSQL/Prisma advisory-lock timeouts without disabling migration safety
+
 ## 1.1.1 — 2026-08
 
 ### Improved

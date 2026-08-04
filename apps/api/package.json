@@ -13,7 +13,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:local:setup": "prisma generate --schema prisma/schema.local.prisma && prisma db push --schema prisma/schema.local.prisma",
     "db:normalize-accounts": "tsx prisma/normalize-account-types.ts",
-    "db:deploy": "prisma migrate deploy && npm run db:normalize-accounts && npm run db:seed"
+    "db:deploy": "node prisma/deploy-production.mjs && npm run db:normalize-accounts && npm run db:seed"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",
