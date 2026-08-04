@@ -280,9 +280,17 @@ const accountRegisterSchema=z.object({
   password:z.string().min(8).max(100),
   stageName:z.string().min(2).max(100).optional(),
   bio:z.string().max(2000).optional(),
+  avatarUrl:z.string().url().max(500).optional().or(z.literal("")),
+  coverImageUrl:z.string().url().max(500).optional().or(z.literal("")),
   phoneNumber:z.string().min(7).max(30).optional(),
   country:z.string().min(2).max(100).optional(),
-  state:z.string().max(120).optional()
+  state:z.string().max(120).optional(),
+  localGovernment:z.string().max(120).optional(),
+  genre:z.string().max(100).optional(),
+  socialLinks:z.record(z.string(),z.string().url().max(500)).optional(),
+  identityDocumentUrl:z.string().url().max(500).optional().or(z.literal("")),
+  supportingDocuments:z.array(z.string().url().max(500)).max(10).optional(),
+  referral:z.string().max(40).regex(/^[a-zA-Z0-9_]+$/).optional()
 }).superRefine((value,context)=>{
   if(value.accountType==="artist"&&!value.stageName){
     context.addIssue({code:"custom",path:["stageName"],message:"Stage name is required for artist registration"});
@@ -507,6 +515,8 @@ api.post("/account/register",featureGate("registrationEnabled"), async (req, res
 
   const passwordHash=await bcrypt.hash(input.password,12);
   const roleName=input.accountType==="artist"?"artist_pending":"member";
+  const referrer=input.referral?await prisma.user.findUnique({where:{username:input.referral.toLowerCase()},select:{id:true}}):null;
+  const visitorHash=createHash("sha256").update(`${req.ip||"unknown"}|${req.get("user-agent")||"unknown"}|${env.JWT_ACCESS_SECRET}`).digest("hex");
   const user=await prisma.user.create({
     data:{
       email,
@@ -517,15 +527,34 @@ api.post("/account/register",featureGate("registrationEnabled"), async (req, res
       phoneNumber:input.phoneNumber||null,
       country:input.country||null,
       state:input.state||null,
+      localGovernment:input.localGovernment||null,
+      avatarUrl:input.avatarUrl||null,
+      bio:input.bio||null,
+      preferredGenre:input.genre||null,
+      socialLinks:prismaJson(input.socialLinks),
+      referredById:referrer?.id||null,
       status:input.accountType==="artist"?"PENDING":"ACTIVE",
       roles:{create:{role:{connectOrCreate:{where:{name:roleName},create:{name:roleName}}}}},
       ...(input.accountType==="artist"?{artist:{create:{
         stageName:input.stageName!,
-        bio:input.bio||null
+        bio:input.bio||null,
+        imageUrl:input.avatarUrl||null,
+        coverImageUrl:input.coverImageUrl||null,
+        genre:input.genre||null,
+        socialLinks:prismaJson(input.socialLinks),
+        identityDocumentUrl:input.identityDocumentUrl||null,
+        identityStatus:input.identityDocumentUrl?"PENDING":"NOT_SUBMITTED",
+        supportingDocuments:prismaJson(input.supportingDocuments)
       }}}:{})
     },
     include:{artist:true,roles:{include:{role:true}}}
   });
+  if(referrer){
+    const visit=await prisma.referralVisit.findFirst({where:{referrerId:referrer.id,visitorHash,convertedUserId:null,createdAt:{gte:new Date(Date.now()-30*86_400_000)}},orderBy:{createdAt:"desc"}});
+    if(visit)await prisma.referralVisit.update({where:{id:visit.id},data:{convertedUserId:user.id,convertedAt:new Date()}});
+    else await prisma.referralVisit.create({data:{referrerId:referrer.id,convertedUserId:user.id,convertedAt:new Date(),visitorHash,ipHash:createHash("sha256").update(`${req.ip||"unknown"}|${env.JWT_REFRESH_SECRET}`).digest("hex"),userAgent:req.get("user-agent")?.slice(0,500)}});
+    await notifyUser(referrer.id,"REFERRAL_SUCCESSFUL","Referral successful",`${user.displayName} joined Tiv Songs with your referral link.`,{userId:user.id});
+  }
   res.status(201).json({
     success:true,
     account:{id:user.id,email:user.email,displayName:user.displayName,status:user.status,accountType:input.accountType},
@@ -621,9 +650,11 @@ api.get("/account/me", accountOnly, async (req:AccountRequest, res) => {
   const user=await prisma.user.findUnique({
     where:{id:req.account!.userId},
     select:{
-      id:true,email:true,username:true,displayName:true,accountType:true,status:true,createdAt:true,
-      artist:{select:{id:true,stageName:true,bio:true,verifiedAt:true}},
-      roles:{select:{role:{select:{name:true}}}}
+      id:true,email:true,username:true,displayName:true,avatarUrl:true,coverUrl:true,bio:true,phoneNumber:true,country:true,state:true,localGovernment:true,socialLinks:true,preferredGenre:true,contributorRank:true,contributorVerifiedAt:true,accountType:true,status:true,createdAt:true,
+      artist:{select:{id:true,stageName:true,bio:true,imageUrl:true,coverImageUrl:true,genre:true,socialLinks:true,identityStatus:true,verifiedAt:true}},
+      roles:{select:{role:{select:{name:true}}}},
+      _count:{select:{contributedSongs:true,contributedVideos:true,followers:true,following:true,referrals:true}},
+      badges:{include:{badge:true},orderBy:{awardedAt:"desc"}}
     }
   });
   if(!user) return void res.status(404).json({error:"Account not found"});
@@ -632,7 +663,7 @@ api.get("/account/me", accountOnly, async (req:AccountRequest, res) => {
 
 api.get("/account/songs", accountOnly, async (req:AccountRequest, res) => {
   const songs=await prisma.song.findMany({
-    where:{artist:{userId:req.account!.userId}},
+    where:{OR:[{contributorId:req.account!.userId},{artist:{userId:req.account!.userId}}]},
     select:{id:true,title:true,slug:true,description:true,artworkUrl:true,audioUrl:true,audioMediumUrl:true,audioLowUrl:true,status:true,createdAt:true,updatedAt:true,publishedAt:true,category:true},
     orderBy:{createdAt:"desc"},take:100
   });
@@ -645,7 +676,7 @@ api.get("/account/songs", accountOnly, async (req:AccountRequest, res) => {
 
 api.get("/account/videos", accountOnly, async (req:AccountRequest, res) => {
   const videos=await prisma.video.findMany({
-    where:{artist:{userId:req.account!.userId}},
+    where:{OR:[{contributorId:req.account!.userId},{artist:{userId:req.account!.userId}}]},
     select:{id:true,title:true,description:true,thumbnailUrl:true,videoUrl:true,status:true,createdAt:true,updatedAt:true,category:true},
     orderBy:{createdAt:"desc"},take:100
   });
@@ -687,7 +718,7 @@ api.post("/account/songs", accountOnly,featureGate("musicUploadEnabled"), async 
     where:{id:req.account!.userId},
     include:{artist:true,roles:{include:{role:true}}}
   });
-  if(!user||!user.artist) return void res.status(403).json({error:"Your contributor profile is unavailable"});
+  if(!user) return void res.status(404).json({error:"Your contributor profile is unavailable"});
   const roles=user.roles.map(item=>item.role.name);
   if(user.status!=="ACTIVE"||roles.includes("artist_pending")){
     return void res.status(403).json({error:"Your artist registration is awaiting administrator approval"});
@@ -698,7 +729,8 @@ api.post("/account/songs", accountOnly,featureGate("musicUploadEnabled"), async 
   while(await prisma.song.findUnique({where:{slug}})) slug=`${base}-${++suffix}`;
   const song=await prisma.song.create({
     data:{
-      artistId:user.artist.id,
+      artistId:user.artist?.id||null,
+      contributorId:user.id,
       categoryId:input.categoryId,
       title:input.title,
       slug,
@@ -717,7 +749,7 @@ api.post("/account/media", accountOnly,featureGate("musicUploadEnabled"), mediaU
     const input=mediaSubmissionSchema.parse(req.body);
     await validateUploadedFile(req.file.path,input.kind);
     const user=await prisma.user.findUnique({where:{id:req.account!.userId},include:{artist:true,roles:{include:{role:true}}}});
-    if(!user?.artist)return void res.status(403).json({error:"Your contributor profile is unavailable"});
+    if(!user)return void res.status(404).json({error:"Your contributor profile is unavailable"});
     if(user.status!=="ACTIVE"||user.roles.some(item=>item.role.name==="artist_pending")){
       return void res.status(403).json({error:"Your artist registration is awaiting administrator approval"});
     }
@@ -729,13 +761,13 @@ api.post("/account/media", accountOnly,featureGate("musicUploadEnabled"), mediaU
       const audio=await withTranscodeSlot(()=>createAudioVariants(req.file!.path));
       const optimization={originalBytes:audio.originalBytes,storedBytes:audio.storedBytes,optimized:audio.optimized};
       while(await prisma.song.findUnique({where:{slug}}))slug=`${base}-${++suffix}`;
-      const song=await prisma.song.create({data:{artistId:user.artist.id,categoryId:input.categoryId,title:input.title,slug,description:input.description||null,audioUrl:audio.highPath,audioMediumUrl:audio.mediumPath,audioLowUrl:audio.lowPath,status:"PENDING_REVIEW"}});
+      const song=await prisma.song.create({data:{artistId:user.artist?.id||null,contributorId:user.id,categoryId:input.categoryId,title:input.title,slug,description:input.description||null,audioUrl:audio.highPath,audioMediumUrl:audio.mediumPath,audioLowUrl:audio.lowPath,status:"PENDING_REVIEW"}});
       return void res.status(201).json(jsonSafe({item:song,optimization,message:"Audio uploaded and submitted for administrator review."}));
     }
     const videoMedia=await withTranscodeSlot(()=>optimizeMedia(req.file!.path,"video",req.file!.originalname));
     const optimization={originalBytes:videoMedia.originalBytes,storedBytes:videoMedia.storedBytes,optimized:videoMedia.optimized};
     while(await prisma.video.findUnique({where:{slug}}))slug=`${base}-${++suffix}`;
-    const video=await prisma.video.create({data:{artistId:user.artist.id,categoryId:input.categoryId,title:input.title,slug,description:input.description||null,videoUrl:videoMedia.relativePath,status:"PENDING_REVIEW"}});
+    const video=await prisma.video.create({data:{artistId:user.artist?.id||null,contributorId:user.id,categoryId:input.categoryId,title:input.title,slug,description:input.description||null,videoUrl:videoMedia.relativePath,status:"PENDING_REVIEW"}});
     res.status(201).json(jsonSafe({item:video,optimization,message:"Video uploaded and submitted for administrator review."}));
   }finally{
     if(req.file)await rm(req.file.path,{force:true}).catch(()=>undefined);
@@ -831,12 +863,13 @@ api.patch("/admin/accounts/:id/approve", adminOnly, async (req:AdminRequest, res
   const artistRole=await prisma.role.upsert({where:{name:"artist"},update:{},create:{name:"artist"}});
   const pendingRole=await prisma.role.findUnique({where:{name:"artist_pending"}});
   await prisma.$transaction([
-    prisma.user.update({where:{id:userId},data:{status:"ACTIVE"}}),
-    prisma.artist.update({where:{userId},data:{verifiedAt:new Date()}}),
+    prisma.user.update({where:{id:userId},data:{status:"ACTIVE",contributorVerifiedAt:new Date()}}),
+    prisma.artist.update({where:{userId},data:{verifiedAt:new Date(),identityStatus:user.artist.identityDocumentUrl?"VERIFIED":user.artist.identityStatus}}),
     prisma.userRole.upsert({where:{userId_roleId:{userId,roleId:artistRole.id}},update:{},create:{userId,roleId:artistRole.id}}),
     ...(pendingRole?[prisma.userRole.deleteMany({where:{userId,roleId:pendingRole.id}})]:[])
   ]);
   await notifyUser(userId,"ARTIST_APPROVED","Artist account approved","Your artist profile is verified and music submission tools are now available.",{artistId:user.artist.id});
+  await refreshContributorBadges(userId);
   await recordAudit(req,"ARTIST_APPROVED","user",userId,`Approved artist account: ${user.email}`);
   res.json({success:true,message:"Artist account approved"});
 });
@@ -886,8 +919,9 @@ api.post("/admin/artists", adminOnly, async (req, res) => {
 });
 
 api.get("/admin/songs", adminOnly, async (_req, res) => {
-  const songs = await prisma.song.findMany({include: {artist: true,category:true}, orderBy: {createdAt: "desc"},take:200});
+  const songs = await prisma.song.findMany({include: {artist: true,contributor:{select:{displayName:true}},category:true}, orderBy: {createdAt: "desc"},take:200});
   res.json(jsonSafe(songs.map(song=>({...song,
+    artist:song.artist||{stageName:song.contributor?.displayName||"Contributor"},
     audioUrl:signedMediaUrl(song.audioUrl,"admin"),
     audioMediumUrl:signedMediaUrl(song.audioMediumUrl,"admin"),
     audioLowUrl:signedMediaUrl(song.audioLowUrl,"admin")
@@ -895,8 +929,8 @@ api.get("/admin/songs", adminOnly, async (_req, res) => {
 });
 
 api.get("/admin/videos", adminOnly, async (_req,res)=>{
-  const videos=await prisma.video.findMany({include:{artist:true,category:true},orderBy:{createdAt:"desc"},take:200});
-  res.json(jsonSafe(videos.map(video=>({...video,videoUrl:signedMediaUrl(video.videoUrl,"admin")}))));
+  const videos=await prisma.video.findMany({include:{artist:true,contributor:{select:{displayName:true}},category:true},orderBy:{createdAt:"desc"},take:200});
+  res.json(jsonSafe(videos.map(video=>({...video,artist:video.artist||{stageName:video.contributor?.displayName||"Contributor"},videoUrl:signedMediaUrl(video.videoUrl,"admin")}))));
 });
 
 api.get("/admin/community",adminOnly,async(_req,res)=>{
@@ -941,15 +975,18 @@ api.patch("/admin/songs/:id/status", adminOnly, async (req, res) => {
   }).parse(req.body);
   const song = await prisma.song.update({
     where: {id},
-    data: {status, publishedAt: status === "PUBLISHED" ? new Date() : null}
+    data: {status, publishedAt: status === "PUBLISHED" ? new Date() : null},
+    include:{artist:{select:{userId:true}},contributor:{select:{id:true}}}
   });
+  const ownerId=song.contributor?.id||song.artist?.userId;if(ownerId){await notifyUser(ownerId,status==="PUBLISHED"?"UPLOAD_APPROVED":"UPLOAD_REJECTED",status==="PUBLISHED"?"Upload approved":"Upload status updated",`${song.title} is now ${status.toLowerCase().replaceAll("_"," ")}.`,{songId:song.id});if(status==="PUBLISHED")await refreshContributorBadges(ownerId)}
   res.json(jsonSafe(song));
 });
 
 api.patch("/admin/videos/:id/status", adminOnly, async (req,res)=>{
   const id=z.string().min(1).parse(req.params.id);
   const {status}=z.object({status:z.enum(["DRAFT","PENDING_REVIEW","PUBLISHED","REJECTED","ARCHIVED"])}).parse(req.body);
-  const video=await prisma.video.update({where:{id},data:{status}});
+  const video=await prisma.video.update({where:{id},data:{status},include:{artist:{select:{userId:true}},contributor:{select:{id:true}}}});
+  const ownerId=video.contributor?.id||video.artist?.userId;if(ownerId){await notifyUser(ownerId,status==="PUBLISHED"?"UPLOAD_APPROVED":"UPLOAD_REJECTED",status==="PUBLISHED"?"Upload approved":"Upload status updated",`${video.title} is now ${status.toLowerCase().replaceAll("_"," ")}.`,{videoId:video.id});if(status==="PUBLISHED")await refreshContributorBadges(ownerId)}
   res.json(jsonSafe(video));
 });
 
@@ -999,7 +1036,7 @@ api.delete("/admin/tor-tiv/:id", adminOnly, async (req, res) => {
 
 // CMS control plane. Flexible entries preserve existing tables while allowing
 // administrators to add new website-managed content without a redeployment.
-const cmsKinds=["hero","news","governor","history","homepage_section","announcement","faq","privacy","terms","about","footer_link","contact"] as const;
+const cmsKinds=["hero","news","governor","history","homepage_section","announcement","faq","privacy","terms","about","footer_link","contact","menu","social_media","leaderboard","reward","referral_policy","comment_policy","song","video","artist","category","community","tor_tiv"] as const;
 const cmsKindSchema=z.enum(cmsKinds);
 const cmsStatusSchema=z.enum(["DRAFT","PUBLISHED","ARCHIVED"]);
 const cmsEntrySchema=z.object({
@@ -1047,6 +1084,8 @@ const settingsSchema=z.object({
     allowReplies:z.boolean(),allowEmojis:z.boolean(),allowGif:z.boolean(),enableReportButton:z.boolean(),
     autoHideThreshold:z.number().int().min(1).max(100),trustedUserThreshold:z.number().int().min(1).max(100)
   }),
+  referralPolicy:z.object({enabled:z.boolean(),pointsPerRegistration:z.number().int().min(0).max(10000),minimumAccountAgeDays:z.number().int().min(0).max(365),dailyClickLimit:z.number().int().min(1).max(10000)}).optional(),
+  rewardPolicy:z.object({enabled:z.boolean(),publicLeaderboard:z.boolean(),monthlyCalculationDay:z.number().int().min(1).max(28),certificateEnabled:z.boolean()}).optional(),
   footer:z.object({about:z.string().max(500),newsletterEnabled:z.boolean(),copyright:z.string().max(200)}),
   version:z.object({currentVersion:z.string().max(40),buildNumber:z.string().max(40),releaseDate:z.string().max(40),environment:z.enum(["Production","Development","Staging"])})
 });
@@ -1060,13 +1099,15 @@ const defaultSettings={
   system:{maintenanceMode:false,registrationEnabled:true,artistRegistrationEnabled:true,communityUploadEnabled:true,musicUploadEnabled:true,videoUploadEnabled:true,commentsEnabled:true,donationEnabled:true},
   utilityDock:{position:"right" as const,visibility:"entire" as const,liveStatus:"online" as const,reportUrl:"mailto:support@tivsongs.com",searchEnabled:true,shareEnabled:true},
   commentPolicy:{approvalRequired:false,requireApprovalForNewUsers:true,minimumApprovedForTrust:5,spamDetection:true,maximumLinks:2,maximumCharacters:3000,allowReplies:true,allowEmojis:true,allowGif:false,enableReportButton:true,autoHideThreshold:5,trustedUserThreshold:5},
+  referralPolicy:{enabled:true,pointsPerRegistration:20,minimumAccountAgeDays:1,dailyClickLimit:25},
+  rewardPolicy:{enabled:true,publicLeaderboard:true,monthlyCalculationDay:1,certificateEnabled:true},
   footer:{about:"The digital home of Tiv music, people, history and cultural heritage.",newsletterEnabled:true,copyright:"© 2026 Tiv Songs. All rights reserved."},
   version:{currentVersion:"1.0.0",buildNumber:"2026.07",releaseDate:"2026-07-30",environment:env.NODE_ENV==="production"?"Production" as const:"Development" as const}
 };
 const mergedSettings=(stored:unknown)=>{
   const value=stored&&typeof stored==="object"?stored as Record<string,unknown>:{};
   const general=value.general&&typeof value.general==="object"?value.general as Record<string,unknown>:{};
-  return {...defaultSettings,...value,general:{...defaultSettings.general,...general,socialLinks:{...defaultSettings.general.socialLinks,...(general.socialLinks as Record<string,string>||{})}},appearance:{...defaultSettings.appearance,...(value.appearance as object||{})},homepage:{...defaultSettings.homepage,...(value.homepage as object||{})},system:{...defaultSettings.system,...(value.system as object||{})},utilityDock:{...defaultSettings.utilityDock,...(value.utilityDock as object||{})},commentPolicy:{...defaultSettings.commentPolicy,...(value.commentPolicy as object||{})},footer:{...defaultSettings.footer,...(value.footer as object||{})},version:{...defaultSettings.version,...(value.version as object||{})}};
+  return {...defaultSettings,...value,general:{...defaultSettings.general,...general,socialLinks:{...defaultSettings.general.socialLinks,...(general.socialLinks as Record<string,string>||{})}},appearance:{...defaultSettings.appearance,...(value.appearance as object||{})},homepage:{...defaultSettings.homepage,...(value.homepage as object||{})},system:{...defaultSettings.system,...(value.system as object||{})},utilityDock:{...defaultSettings.utilityDock,...(value.utilityDock as object||{})},commentPolicy:{...defaultSettings.commentPolicy,...(value.commentPolicy as object||{})},referralPolicy:{...defaultSettings.referralPolicy,...(value.referralPolicy as object||{})},rewardPolicy:{...defaultSettings.rewardPolicy,...(value.rewardPolicy as object||{})},footer:{...defaultSettings.footer,...(value.footer as object||{})},version:{...defaultSettings.version,...(value.version as object||{})}};
 };
 const cmsClients=new Set<Response>();
 const prismaJson=(value:unknown):Prisma.InputJsonValue|undefined=>value==null?undefined:value as Prisma.InputJsonValue;
@@ -1134,6 +1175,13 @@ api.post("/comments",accountOnly,async(req:AccountRequest,res)=>{
   const duplicate=await prisma.cmsComment.findFirst({where:{userId:req.account!.userId,body:input.body,createdAt:{gte:new Date(Date.now()-86_400_000)}}});const trust=await commentTrust(req.account!.userId,policy.minimumApprovedForTrust);const spam=scoreCommentSpam(input.body,policy);
   const suspicious=policy.spamDetection&&(spam.suspicious||Boolean(duplicate));const status=suspicious?"SPAM":policy.approvalRequired||(policy.requireApprovalForNewUsers&&!trust.trusted)?"PENDING":"APPROVED";
   const item=await prisma.cmsComment.create({data:{...input,userId:req.account!.userId,spamScore:suspicious?Math.max(spam.score,duplicate?.spamScore||.7):spam.score,status}});
+  if(status==="SPAM"){
+    const recentSpam=await prisma.cmsComment.count({where:{userId:req.account!.userId,status:"SPAM",createdAt:{gte:new Date(Date.now()-30*86_400_000)}}});
+    if(recentSpam>=3&&!await prisma.userWarning.findFirst({where:{userId:req.account!.userId,active:true,reason:{contains:"Repeated comment spam"}}})){
+      await prisma.userWarning.create({data:{userId:req.account!.userId,level:recentSpam>=6?"FINAL":"WARNING",reason:"Repeated comment spam detected by the moderation rule engine.",issuedBy:"system"}});
+      await notifyUser(req.account!.userId,"COMMENT_WARNING","Comment policy warning","Repeated spam-like comments were detected. Future violations may restrict your account.",{recentSpam});
+    }
+  }
   if(input.parentId&&status==="APPROVED"){const parent=await prisma.cmsComment.findUnique({where:{id:input.parentId},select:{userId:true}});if(parent&&parent.userId!==req.account!.userId)await notifyUser(parent.userId,"COMMENT_REPLIED","New reply to your comment",input.body.slice(0,180),{commentId:item.id})}
   cmsBroadcast(status==="APPROVED"?"comment.approved":"comment.submitted",{id:item.id,targetType:item.targetType,targetId:item.targetId,status});res.status(201).json({id:item.id,status,autoPublished:status==="APPROVED",message:status==="APPROVED"?"Your comment is now live.":"Your comment is awaiting review."});
 });
@@ -1161,22 +1209,101 @@ api.post("/analytics",async(req,res)=>{
 api.get("/search",async(req,res)=>{
   const q=z.string().min(2).max(100).parse(req.query.q);
   const blocked=await prisma.searchRule.findFirst({where:{type:"BLOCKED",active:true,keyword:{equals:q}}});
-  if(blocked)return void res.json({songs:[],videos:[],artists:[],community:[],kings:[],history:[]});
+  if(blocked)return void res.json({songs:[],videos:[],artists:[],users:[],community:[],kings:[],history:[],leaderboard:[]});
   const contains={contains:q};
-  const [songs,videos,artists,community,kings,history]=await Promise.all([
+  const [songs,videos,artists,users,community,kings,history]=await Promise.all([
     prisma.song.findMany({where:{status:"PUBLISHED",title:contains},take:6,select:{id:true,title:true,slug:true,artworkUrl:true,artist:{select:{stageName:true}}}}),
     prisma.video.findMany({where:{status:"PUBLISHED",title:contains},take:6,select:{id:true,title:true,slug:true,thumbnailUrl:true,artist:{select:{stageName:true}}}}),
     prisma.artist.findMany({where:{stageName:contains},take:6,select:{id:true,stageName:true,imageUrl:true}}),
+    prisma.user.findMany({where:{status:"ACTIVE",OR:[{username:contains},{displayName:contains}]},take:6,select:{id:true,username:true,displayName:true,avatarUrl:true,contributorRank:true}}),
     prisma.communityPost.findMany({where:{status:"PUBLISHED",OR:[{title:contains},{description:contains}]},take:6,select:{id:true,title:true,mediaUrl:true}}),
     prisma.torTiv.findMany({where:{OR:[{name:contains},{biography:contains}]},take:6,select:{id:true,name:true,portraitUrl:true}}),
     prisma.historyArticle.findMany({where:{OR:[{title:contains},{body:contains}]},take:6,select:{id:true,title:true,slug:true,coverUrl:true}})
   ]);
   void prisma.analyticsEvent.create({data:{event:"search",searchTerm:q,device:/mobile/i.test(req.get("user-agent")||"")?"mobile":"desktop"}}).catch(()=>undefined);
-  res.json({songs,videos,artists:artists.map(item=>({...item,slug:publicSlug(item.stageName)})),community:community.map(item=>({...item,slug:`${publicSlug(item.title)}--${item.id}`})),kings,history});
+  res.json({songs,videos,artists:artists.map(item=>({...item,slug:publicSlug(item.stageName)})),users:users.map(item=>({...item,slug:item.username})),community:community.map(item=>({...item,slug:`${publicSlug(item.title)}--${item.id}`})),kings,history,leaderboard:users.map(item=>({id:item.id,title:item.displayName,slug:item.username,rank:item.contributorRank}))});
 });
 api.get("/search/suggestions",async(_req,res)=>{const items=await prisma.searchRule.findMany({where:{active:true,type:{in:["TRENDING","SUGGESTION"]}},orderBy:{weight:"desc"},take:12,select:{keyword:true,type:true}});res.json(items)});
 api.get("/account/notifications",accountOnly,async(req:AccountRequest,res)=>{const items=await prisma.notification.findMany({where:{userId:req.account!.userId},orderBy:{createdAt:"desc"},take:50});res.json({items,unread:items.filter(item=>!item.readAt).length})});
 api.patch("/account/notifications/read",accountOnly,async(req:AccountRequest,res)=>{await prisma.notification.updateMany({where:{userId:req.account!.userId,readAt:null},data:{readAt:new Date()}});res.status(204).end()});
+
+const leaderboardSince=(period:string)=>{
+  const now=new Date();
+  if(period==="today"){const value=new Date(now);value.setHours(0,0,0,0);return value}
+  if(period==="week"){const value=new Date(now);value.setDate(value.getDate()-6);value.setHours(0,0,0,0);return value}
+  if(period==="month")return new Date(now.getFullYear(),now.getMonth(),1);
+  return undefined;
+};
+const contributorStats=async(userId:string,since?:Date,until?:Date)=>{
+  const createdAt=since||until?{...(since?{gte:since}:{}),...(until?{lte:until}:{})}:undefined;
+  const [songs,videos,comments,followers,following,referrals,visits]=await Promise.all([
+    prisma.song.findMany({where:{contributorId:userId,...(createdAt?{createdAt}:{}),status:"PUBLISHED"},select:{playCount:true,downloadCount:true,_count:{select:{likes:true,comments:true}}}}),
+    prisma.video.findMany({where:{contributorId:userId,...(createdAt?{createdAt}:{}),status:"PUBLISHED"},select:{viewCount:true,downloadCount:true}}),
+    prisma.cmsComment.count({where:{userId,status:"APPROVED",...(createdAt?{createdAt}:{})}}),
+    prisma.follow.count({where:{followingId:userId}}),prisma.follow.count({where:{followerId:userId}}),
+    prisma.user.count({where:{referredById:userId,status:"ACTIVE",...(createdAt?{createdAt}:{})}}),
+    prisma.referralVisit.count({where:{referrerId:userId,...(createdAt?{createdAt}:{})}})
+  ]);
+  const streams=songs.reduce((sum,item)=>sum+Number(item.playCount),0)+videos.reduce((sum,item)=>sum+Number(item.viewCount),0);
+  const downloads=songs.reduce((sum,item)=>sum+Number(item.downloadCount),0)+videos.reduce((sum,item)=>sum+Number(item.downloadCount),0);
+  const likes=songs.reduce((sum,item)=>sum+item._count.likes,0);const songComments=songs.reduce((sum,item)=>sum+item._count.comments,0);
+  const score=songs.length*30+videos.length*30+streams+downloads*2+likes*3+(comments+songComments)*2+followers*4+referrals*20;
+  const rank=score>=10_000?"Cultural Icon":score>=2_500?"Top Contributor":score>=500?"Established Contributor":score>=100?"Rising Contributor":"New Contributor";
+  return {songs:songs.length,videos:videos.length,streams,downloads,likes,comments:comments+songComments,followers,following,referrals,referralClicks:visits,score,rank};
+};
+const refreshContributorBadges=async(userId:string)=>{
+  const stats=await contributorStats(userId);const user=await prisma.user.findUnique({where:{id:userId},select:{artist:{select:{verifiedAt:true}}}});const keys:string[]=[];
+  if(stats.songs+stats.videos>0)keys.push("new-contributor");if(stats.score>=2500)keys.push("top-contributor");if(stats.downloads>=100)keys.push("downloads-100");if(stats.streams>=1000)keys.push("streams-1000");if(stats.comments>=50)keys.push("community-champion");if(stats.referrals>=5)keys.push("top-referrer");if(user?.artist?.verifiedAt)keys.push("verified-artist");
+  const badges=await prisma.badge.findMany({where:{key:{in:keys},active:true}});for(const badge of badges)await prisma.userBadge.upsert({where:{userId_badgeId:{userId,badgeId:badge.id}},create:{userId,badgeId:badge.id,reason:"Automatically awarded from contributor activity"},update:{}});
+  await prisma.user.update({where:{id:userId},data:{contributorRank:stats.rank}});return stats;
+};
+
+api.post("/referrals/:username/click",async(req,res)=>{
+  const username=z.string().min(3).max(40).regex(/^[a-zA-Z0-9_]+$/).parse(req.params.username).toLowerCase();
+  const referrer=await prisma.user.findUnique({where:{username},select:{id:true}});if(!referrer)return void res.status(404).json({error:"Referral profile not found"});
+  const visitorHash=createHash("sha256").update(`${req.ip||"unknown"}|${req.get("user-agent")||"unknown"}|${env.JWT_ACCESS_SECRET}`).digest("hex");
+  const recent=await prisma.referralVisit.findFirst({where:{referrerId:referrer.id,visitorHash,createdAt:{gte:new Date(Date.now()-24*60*60*1000)}}});
+  if(!recent)await prisma.referralVisit.create({data:{referrerId:referrer.id,visitorHash,ipHash:createHash("sha256").update(`${req.ip||"unknown"}|${env.JWT_REFRESH_SECRET}`).digest("hex"),userAgent:req.get("user-agent")?.slice(0,500)}});
+  res.status(202).json({accepted:true,referral:username});
+});
+
+api.get("/contributors/:username",async(req,res)=>{
+  const username=z.string().min(3).max(40).parse(req.params.username).toLowerCase();
+  const user=await prisma.user.findUnique({where:{username},select:{id:true,username:true,displayName:true,avatarUrl:true,coverUrl:true,bio:true,country:true,state:true,preferredGenre:true,contributorRank:true,contributorVerifiedAt:true,createdAt:true,artist:{select:{stageName:true,bio:true,imageUrl:true,coverImageUrl:true,genre:true,verifiedAt:true}},badges:{include:{badge:true},orderBy:{awardedAt:"desc"}},contributedSongs:{where:{status:"PUBLISHED"},orderBy:{publishedAt:"desc"},take:12,select:{id:true,title:true,slug:true,artworkUrl:true,playCount:true,downloadCount:true}},contributedVideos:{where:{status:"PUBLISHED"},orderBy:{createdAt:"desc"},take:12,select:{id:true,title:true,slug:true,thumbnailUrl:true,viewCount:true,downloadCount:true}}}});
+  if(!user)return void res.status(404).json({error:"Contributor not found"});const stats=await contributorStats(user.id);
+  res.setHeader("Cache-Control","public, max-age=30, stale-while-revalidate=120");res.json(jsonSafe({...user,stats}));
+});
+
+api.post("/contributors/:username/follow",accountOnly,async(req:AccountRequest,res)=>{
+  const username=z.string().min(3).max(40).parse(req.params.username).toLowerCase();const target=await prisma.user.findUnique({where:{username},select:{id:true,displayName:true}});
+  if(!target)return void res.status(404).json({error:"Contributor not found"});if(target.id===req.account!.userId)return void res.status(422).json({error:"You cannot follow yourself"});
+  const where={followerId_followingId:{followerId:req.account!.userId,followingId:target.id}};const existing=await prisma.follow.findUnique({where});
+  if(existing)await prisma.follow.delete({where});else{await prisma.follow.create({data:{followerId:req.account!.userId,followingId:target.id}});await notifyUser(target.id,"NEW_FOLLOWER","New follower","A Tiv Songs member followed your contributor profile.",{followerId:req.account!.userId})}
+  res.json({following:!existing,followers:await prisma.follow.count({where:{followingId:target.id}})});
+});
+
+api.get("/account/referrals",accountOnly,async(req:AccountRequest,res)=>{
+  const user=await prisma.user.findUnique({where:{id:req.account!.userId},select:{username:true}});if(!user)return void res.status(404).json({error:"Account not found"});
+  const [clicks,registrations,successful,recent]=await Promise.all([prisma.referralVisit.count({where:{referrerId:req.account!.userId}}),prisma.referralVisit.count({where:{referrerId:req.account!.userId,convertedUserId:{not:null}}}),prisma.user.count({where:{referredById:req.account!.userId,status:"ACTIVE"}}),prisma.user.findMany({where:{referredById:req.account!.userId},select:{username:true,displayName:true,status:true,createdAt:true},orderBy:{createdAt:"desc"},take:20})]);
+  res.json({link:`${env.WEB_URL}/account?mode=register&ref=${encodeURIComponent(user.username)}`,clicks,registrations,successful,score:successful*20+clicks,recent});
+});
+
+api.get("/leaderboard",async(req,res)=>{
+  const period=z.enum(["today","week","month","all"]).catch("month").parse(req.query.period);const since=leaderboardSince(period);
+  const users=await prisma.user.findMany({where:{status:"ACTIVE"},select:{id:true,username:true,displayName:true,avatarUrl:true,accountType:true,artist:{select:{stageName:true,verifiedAt:true}}},orderBy:{createdAt:"asc"},take:250});
+  const scored=await Promise.all(users.map(async user=>({...user,stats:await contributorStats(user.id,since)})));const by=(selector:(item:typeof scored[number])=>number)=>[...scored].sort((a,b)=>selector(b)-selector(a)).slice(0,20);
+  const songWhere={status:"PUBLISHED" as const,...(since?{publishedAt:{gte:since}}:{})};const [streamed,downloaded,community]=await Promise.all([prisma.song.findMany({where:songWhere,orderBy:{playCount:"desc"},take:20,select:{id:true,title:true,slug:true,playCount:true,downloadCount:true,artworkUrl:true,artist:{select:{stageName:true}},contributor:{select:{username:true,displayName:true}}}}),prisma.song.findMany({where:songWhere,orderBy:{downloadCount:"desc"},take:20,select:{id:true,title:true,slug:true,playCount:true,downloadCount:true,artworkUrl:true,artist:{select:{stageName:true}},contributor:{select:{username:true,displayName:true}}}}),prisma.cmsComment.groupBy({by:["userId"],where:{status:"APPROVED",...(since?{createdAt:{gte:since}}:{})},_count:{_all:true},orderBy:{_count:{userId:"desc"}},take:20})]);
+  const communityIds=community.map(item=>item.userId);const communityUsers=await prisma.user.findMany({where:{id:{in:communityIds}},select:{id:true,username:true,displayName:true,avatarUrl:true}});const communityMap=new Map(communityUsers.map(item=>[item.id,item]));
+  res.setHeader("Cache-Control","public, max-age=60, stale-while-revalidate=300");res.json(jsonSafe({period,topMusic:by(item=>item.stats.songs*30+item.stats.streams),topVideo:by(item=>item.stats.videos*30+item.stats.streams),topReferrers:by(item=>item.stats.referrals*20+item.stats.referralClicks),topArtists:by(item=>item.artist?.verifiedAt?item.stats.score:0).filter(item=>item.artist),topContributors:by(item=>item.stats.score),mostStreamedSongs:streamed,mostDownloadedSongs:downloaded,mostActiveCommunity:community.map(item=>({...communityMap.get(item.userId),comments:item._count._all}))}));
+});
+
+api.get("/rewards",async(_req,res)=>{const items=await prisma.rewardCampaign.findMany({where:{status:"PUBLISHED"},include:{winners:{include:{user:{select:{username:true,displayName:true,avatarUrl:true,artist:{select:{stageName:true}}}}},orderBy:[{category:"asc"},{rank:"asc"}]}},orderBy:{rewardDate:"desc"},take:12});res.json(jsonSafe(items))});
+api.get("/rewards/certificates/:code",async(req,res)=>{const code=z.string().min(8).max(100).parse(req.params.code);const winner=await prisma.rewardWinner.findUnique({where:{certificateCode:code},include:{campaign:true,user:{select:{displayName:true,username:true}}}});if(!winner||!winner.publishedAt)return void res.status(404).send("Certificate not found");const safe=(value:string)=>value.replace(/[<>&\"]/g,char=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[char]!));res.setHeader("Content-Disposition",`attachment; filename="tiv-songs-${code}.svg"`);res.type("image/svg+xml").send(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="850"><rect width="100%" height="100%" fill="#26003f"/><rect x="45" y="45" width="1110" height="760" rx="28" fill="#fff8f3" stroke="#ffad73" stroke-width="6"/><text x="600" y="155" text-anchor="middle" font-size="38" font-family="Arial" fill="#4d0f78">TIV SONGS CERTIFICATE</text><text x="600" y="260" text-anchor="middle" font-size="24" font-family="Arial">Presented to</text><text x="600" y="355" text-anchor="middle" font-size="56" font-weight="bold" font-family="Arial" fill="#26003f">${safe(winner.user.displayName)}</text><text x="600" y="440" text-anchor="middle" font-size="30" font-family="Arial">${safe(winner.campaign.name)}</text><text x="600" y="510" text-anchor="middle" font-size="24" font-family="Arial">${safe(winner.category)} · Rank ${winner.rank} · Score ${winner.score}</text><text x="600" y="680" text-anchor="middle" font-size="18" font-family="Arial">Verification: ${safe(code)}</text></svg>`)});
+
+api.get("/admin/rewards",adminOnly,async(_req,res)=>res.json(jsonSafe(await prisma.rewardCampaign.findMany({include:{winners:{include:{user:{select:{username:true,displayName:true}}}}},orderBy:{rewardDate:"desc"}}))));
+api.post("/admin/rewards",adminOnly,async(req:AdminRequest,res)=>{const input=z.object({name:z.string().min(2).max(160),amount:z.number().int().nonnegative().optional(),currency:z.string().length(3).default("NGN"),rewardType:z.enum(["CASH","TOKEN","GIFT","CERTIFICATE","BADGE"]),numberOfWinners:z.number().int().min(1).max(50),rewardDate:z.coerce.date(),periodStart:z.coerce.date(),periodEnd:z.coerce.date()}).parse(req.body);const item=await prisma.rewardCampaign.create({data:{...input,createdBy:req.admin?.email}});await recordAudit(req,"CREATE","reward",item.id,`Created reward campaign: ${item.name}`);res.status(201).json(item)});
+api.post("/admin/rewards/:id/calculate",adminOnly,async(req:AdminRequest,res)=>{const id=z.string().parse(req.params.id);const campaign=await prisma.rewardCampaign.findUnique({where:{id}});if(!campaign)return void res.status(404).json({error:"Reward campaign not found"});const users=await prisma.user.findMany({where:{status:"ACTIVE"},select:{id:true}});const scored=await Promise.all(users.map(async user=>({userId:user.id,...await contributorStats(user.id,campaign.periodStart,campaign.periodEnd)})));const winners=scored.filter(item=>item.score>0).sort((a,b)=>b.score-a.score).slice(0,campaign.numberOfWinners);await prisma.rewardWinner.deleteMany({where:{campaignId:id}});for(const [index,winner] of winners.entries())await prisma.rewardWinner.create({data:{campaignId:id,userId:winner.userId,category:"Top Contributor",rank:index+1,score:winner.score,certificateCode:`TIV-${campaign.rewardDate.getUTCFullYear()}-${randomBytes(6).toString("hex").toUpperCase()}`}});await recordAudit(req,"CALCULATE","reward",id,`Calculated ${winners.length} reward winners`);res.json({winners:winners.length})});
+api.post("/admin/rewards/:id/publish",adminOnly,async(req:AdminRequest,res)=>{const id=z.string().parse(req.params.id);const campaign=await prisma.rewardCampaign.update({where:{id},data:{status:"PUBLISHED",publishedAt:new Date()},include:{winners:true}});const badge=await prisma.badge.findUnique({where:{key:"monthly-winner"}});for(const winner of campaign.winners){await prisma.rewardWinner.update({where:{id:winner.id},data:{publishedAt:new Date()}});if(badge)await prisma.userBadge.upsert({where:{userId_badgeId:{userId:winner.userId,badgeId:badge.id}},create:{userId:winner.userId,badgeId:badge.id,reason:campaign.name},update:{reason:campaign.name,awardedAt:new Date()}});await notifyUser(winner.userId,"REWARD_WON","You won a Tiv Songs reward",campaign.name,{campaignId:id,certificateCode:winner.certificateCode})}await recordAudit(req,"PUBLISH","reward",id,`Published reward campaign: ${campaign.name}`);res.json({published:true,winners:campaign.winners.length})});
 
 api.get("/admin/settings",adminOnly,async(_req,res)=>{const stored=await prisma.setting.findUnique({where:{key:"website"}});res.json(mergedSettings(stored?.value))});
 api.put("/admin/settings",adminOnly,async(req:AdminRequest,res)=>{

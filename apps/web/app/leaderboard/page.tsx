@@ -1,0 +1,20 @@
+"use client";
+
+import Link from "next/link";
+import {useEffect,useState} from "react";
+import PrimaryNavLinks from "../components/PrimaryNavLinks";
+import SiteFooter from "../components/SiteFooter";
+import styles from "./leaderboard.module.css";
+
+type Person={id:string;username:string;displayName:string;avatarUrl:string|null;artist?:{stageName:string}|null;stats:{songs:number;videos:number;streams:number;downloads:number;referrals:number;score:number;rank:string}};
+type Song={id:string;title:string;slug:string;playCount:string|number;downloadCount:string|number;artist:{stageName:string}|null;contributor:{displayName:string}|null};
+type Board={period:string;topMusic:Person[];topVideo:Person[];topReferrers:Person[];topArtists:Person[];topContributors:Person[];mostStreamedSongs:Song[];mostDownloadedSongs:Song[];mostActiveCommunity:Array<{id?:string;username?:string;displayName?:string;comments:number}>};
+const periods=["today","week","month","all"] as const;
+
+export default function LeaderboardPage(){
+  const [period,setPeriod]=useState<(typeof periods)[number]>("month"),[data,setData]=useState<Board|null>(null),[error,setError]=useState("");
+  useEffect(()=>{setData(null);fetch(`/api/leaderboard?period=${period}`).then(async response=>{if(!response.ok)throw new Error("Leaderboard is temporarily unavailable");return response.json()}).then(setData).catch(reason=>setError(reason.message))},[period]);
+  const people=(title:string,items:Person[],metric:(item:Person)=>string)=><section className={styles.panel}><h2>{title}</h2>{items.map((item,index)=><Link className={styles.row} href={`/contributor/${item.username}`} key={item.id}><b>{index+1}</b><span><strong>{item.artist?.stageName||item.displayName}</strong><small>@{item.username} · {item.stats.rank}</small></span><em>{metric(item)}</em></Link>)}{!items.length&&<p>No ranked activity in this period.</p>}</section>;
+  const songs=(title:string,items:Song[],metric:(item:Song)=>string)=><section className={styles.panel}><h2>{title}</h2>{items.map((item,index)=><Link className={styles.row} href={`/song/${item.slug}`} key={item.id}><b>{index+1}</b><span><strong>{item.title}</strong><small>{item.artist?.stageName||item.contributor?.displayName||"Tiv Songs contributor"}</small></span><em>{metric(item)}</em></Link>)}</section>;
+  return <main className={styles.page}><nav className={styles.nav}><Link href="/" className={styles.brand}>TIV SONGS</Link><div><PrimaryNavLinks linkClassName={styles.link} activeClassName={styles.active}/></div></nav><header className={styles.hero}><span>COMMUNITY RECOGNITION</span><h1>Tiv Songs Leaderboard</h1><p>Transparent rankings celebrate music, video, referrals and positive community participation.</p><div className={styles.periods}>{periods.map(item=><button key={item} onClick={()=>setPeriod(item)} aria-pressed={period===item}>{item==="all"?"All time":item[0]!.toUpperCase()+item.slice(1)}</button>)}</div></header>{error&&<p className={styles.error}>{error}</p>}<div className={styles.grid}>{!data?<div className={styles.loading}>Calculating verified activity…</div>:<>{people("Top Contributors",data.topContributors,item=>`${item.stats.score} pts`)}{people("Top Music Contributors",data.topMusic,item=>`${item.stats.songs} songs`)}{people("Top Video Contributors",data.topVideo,item=>`${item.stats.videos} videos`)}{people("Top Referrers",data.topReferrers,item=>`${item.stats.referrals} referrals`)}{people("Top Artists",data.topArtists,item=>`${item.stats.streams} streams`)}{songs("Most Streamed Songs",data.mostStreamedSongs,item=>`${item.playCount} streams`)}{songs("Most Downloaded Songs",data.mostDownloadedSongs,item=>`${item.downloadCount} downloads`)}<section className={styles.panel}><h2>Most Active Community Members</h2>{data.mostActiveCommunity.map((item,index)=><Link className={styles.row} href={`/contributor/${item.username}`} key={item.id||index}><b>{index+1}</b><span><strong>{item.displayName}</strong><small>@{item.username}</small></span><em>{item.comments} comments</em></Link>)}</section></>}</div><SiteFooter variant="community"/></main>;
+}

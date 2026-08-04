@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.1.0 — 2026-08
+
+### Added
+
+- Public contributor profiles for member and artist accounts, contributor uploads, follows, ranks and achievement badges
+- Period-filtered leaderboards for contributors, artists, referrals, songs and community activity
+- Referral attribution, abuse-resistant click tracking and private dashboard analytics
+- Configurable reward campaigns, calculated winners, notifications and downloadable SVG certificates
+- Expanded artist applications with contact, location, genre, social, identity and supporting-document fields
+- Additive PostgreSQL migration that backfills existing artist ownership without deleting or renaming existing data
+
+### Improved
+
+- Comment submission feedback and automated warning flow for repeated spam
+- Admin upload review compatibility for both artist and member contributors
+- CMS kinds and policies for leaderboard, rewards, referrals and comment moderation
+
 ## 1.0.0 — 2026-07
 
 ### Added
