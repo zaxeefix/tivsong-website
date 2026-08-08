@@ -14,8 +14,8 @@ export const metadata:Metadata={
   openGraph:{type:"website",siteName:"Tiv Songs",title:"Tiv Songs — Where Real Music Is",description:"The digital home of Tiv music and cultural heritage.",url:"/",images:[{url:"/assets/tiv-song-logo.jpeg",width:1200,height:1200,alt:"Tiv Songs"}]},
   twitter:{card:"summary_large_image",title:"Tiv Songs — Where Real Music Is",description:"The digital home of Tiv music and cultural heritage.",images:["/assets/tiv-song-logo.jpeg"]},
   icons:{
-    icon:[{url:"/icon-192.png",type:"image/png",sizes:"192x192"}],
-    shortcut:"/icon-192.png",
+    icon:[{url:"/assets/tiv-song-logo.jpeg",type:"image/jpeg"}],
+    shortcut:"/assets/tiv-song-logo.jpeg",
     apple:"/icon-192.png"
   },
   robots:{index:true,follow:true},

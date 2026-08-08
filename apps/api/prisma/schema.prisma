@@ -32,9 +32,17 @@ model User {
   passwordHash    String?
   displayName     String
   avatarUrl       String?
+  coverUrl        String?
+  bio             String?
   phoneNumber     String?
   country         String?
   state           String?
+  localGovernment String?
+  socialLinks     Json?
+  preferredGenre  String?
+  contributorRank String        @default("New Contributor")
+  contributorVerifiedAt DateTime?
+  referredById    String?
   accountType     String        @default("individual")
   locale          String        @default("en")
   status          UserStatus    @default(PENDING)
@@ -61,10 +69,21 @@ model User {
   communityPosts  CommunityPost[]
   payments        Payment[]
   subscriptions   Subscription[]
+  contributedSongs Song[]         @relation("SongContributor")
+  contributedVideos Video[]       @relation("VideoContributor")
+  referredBy      User?           @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals       User[]          @relation("UserReferrals")
+  referralVisits  ReferralVisit[] @relation("ReferralOwner")
+  convertedReferral ReferralVisit? @relation("ReferralConversion")
+  followers       Follow[]        @relation("FollowingUser")
+  following       Follow[]        @relation("FollowerUser")
+  badges          UserBadge[]
+  rewardWins      RewardWinner[]
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   @@index([status, createdAt])
+  @@index([referredById, createdAt])
 }
 
 model Role {
@@ -118,6 +137,12 @@ model Artist {
   stageName  String    @unique
   bio        String?
   imageUrl   String?
+  coverImageUrl String?
+  genre      String?
+  socialLinks Json?
+  identityStatus String @default("NOT_SUBMITTED")
+  identityDocumentUrl String?
+  supportingDocuments Json?
   verifiedAt DateTime?
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   albums     Album[]
@@ -164,7 +189,8 @@ model Category {
 
 model Song {
   id            String      @id @default(cuid())
-  artistId      String
+  artistId      String?
+  contributorId String?
   albumId       String?
   genreId       String?
   languageId    String?
@@ -183,7 +209,8 @@ model Song {
   playCount     BigInt      @default(0)
   downloadCount BigInt      @default(0)
   publishedAt   DateTime?
-  artist        Artist      @relation(fields: [artistId], references: [id])
+  artist        Artist?     @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  contributor   User?       @relation("SongContributor", fields: [contributorId], references: [id], onDelete: SetNull)
   album         Album?      @relation(fields: [albumId], references: [id], onDelete: SetNull)
   genre         Genre?      @relation(fields: [genreId], references: [id], onDelete: SetNull)
   language      Language?   @relation(fields: [languageId], references: [id], onDelete: SetNull)
@@ -197,11 +224,13 @@ model Song {
 
   @@index([status, publishedAt])
   @@index([artistId, status])
+  @@index([contributorId, status, createdAt])
 }
 
 model Video {
   id           String      @id @default(cuid())
-  artistId     String
+  artistId     String?
+  contributorId String?
   categoryId   String?
   title        String
   slug         String      @unique
@@ -212,12 +241,102 @@ model Video {
   duration     Int?
   status       MediaStatus @default(DRAFT)
   viewCount    BigInt      @default(0)
-  artist       Artist      @relation(fields: [artistId], references: [id])
+  downloadCount BigInt     @default(0)
+  artist       Artist?     @relation(fields: [artistId], references: [id], onDelete: SetNull)
+  contributor  User?       @relation("VideoContributor", fields: [contributorId], references: [id], onDelete: SetNull)
   category     Category?   @relation(fields: [categoryId], references: [id])
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
 
   @@index([status, createdAt])
+  @@index([contributorId, status, createdAt])
+}
+
+model ReferralVisit {
+  id              String   @id @default(cuid())
+  referrerId      String
+  convertedUserId String?  @unique
+  visitorHash     String
+  ipHash          String?
+  userAgent       String?
+  convertedAt     DateTime?
+  createdAt       DateTime @default(now())
+  referrer        User     @relation("ReferralOwner", fields: [referrerId], references: [id], onDelete: Cascade)
+  convertedUser   User?    @relation("ReferralConversion", fields: [convertedUserId], references: [id], onDelete: SetNull)
+
+  @@index([referrerId, createdAt])
+  @@index([visitorHash, createdAt])
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("FollowerUser", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("FollowingUser", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followingId, createdAt])
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  key         String      @unique
+  name        String
+  description String
+  icon        String?
+  active      Boolean     @default(true)
+  users       UserBadge[]
+  createdAt   DateTime    @default(now())
+}
+
+model UserBadge {
+  userId    String
+  badgeId   String
+  awardedAt DateTime @default(now())
+  reason    String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge     Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@id([userId, badgeId])
+  @@index([awardedAt])
+}
+
+model RewardCampaign {
+  id              String         @id @default(cuid())
+  name            String
+  amount          Int?
+  currency        String         @default("NGN")
+  rewardType      String
+  numberOfWinners Int            @default(1)
+  rewardDate      DateTime
+  periodStart     DateTime
+  periodEnd       DateTime
+  status          String         @default("DRAFT")
+  publishedAt     DateTime?
+  createdBy       String?
+  winners         RewardWinner[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([status, rewardDate])
+}
+
+model RewardWinner {
+  id          String         @id @default(cuid())
+  campaignId  String
+  userId      String
+  category    String
+  rank        Int
+  score       Int
+  certificateCode String     @unique
+  publishedAt DateTime?
+  campaign    RewardCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime       @default(now())
+
+  @@unique([campaignId, category, rank])
+  @@index([userId, createdAt])
 }
 
 model CommunityPost {
