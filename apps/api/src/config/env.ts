@@ -17,7 +17,13 @@ const schema = z.object({
   UPLOAD_DIR: z.string().default("uploads"),
   MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(500).default(100),
   MAX_TRANSCODES: z.coerce.number().int().min(1).max(8).default(2),
-  VIRUS_SCAN_URL:z.string().url().optional()
+  VIRUS_SCAN_URL:z.string().url().optional(),
+  STORAGE_PROVIDER:z.enum(["local","s3"]).default("local"),
+  S3_ENDPOINT:z.string().url().optional(),
+  S3_REGION:z.string().default("auto"),
+  S3_BUCKET:z.string().optional(),
+  S3_ACCESS_KEY_ID:z.string().optional(),
+  S3_SECRET_ACCESS_KEY:z.string().optional()
 }).superRefine((value, context) => {
   if (value.NODE_ENV === "production") {
     for (const key of ["ADMIN_EMAIL", "ADMIN_PASSWORD", "SUPER_ADMIN_EMAIL", "SUPER_ADMIN_PASSWORD"] as const) {
@@ -26,6 +32,10 @@ const schema = z.object({
     if (value.ADMIN_PASSWORD === value.SUPER_ADMIN_PASSWORD) {
       context.addIssue({code:"custom",path:["SUPER_ADMIN_PASSWORD"],message:"Administrator passwords must be different"});
     }
+    if(value.STORAGE_PROVIDER!=="s3")context.addIssue({code:"custom",path:["STORAGE_PROVIDER"],message:"Production media requires durable S3-compatible storage"});
+  }
+  if(value.STORAGE_PROVIDER==="s3"){
+    for(const key of ["S3_ENDPOINT","S3_BUCKET","S3_ACCESS_KEY_ID","S3_SECRET_ACCESS_KEY"] as const)if(!value[key])context.addIssue({code:"custom",path:[key],message:`${key} is required when STORAGE_PROVIDER=s3`});
   }
 });
 

@@ -26,9 +26,6 @@ if (process.env.NODE_ENV === "production") {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
-  // The patched top-level Sharp package can be used by a dedicated image service;
-  // disable Next's pinned vulnerable optimizer in this application.
-  images: { unoptimized: true },
   async headers() {
     return [
       {
@@ -38,6 +35,7 @@ const nextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          ...(!isDevelopment?[{key:"Strict-Transport-Security",value:"max-age=31536000; includeSubDomains; preload"}]:[]),
           { key: "Content-Security-Policy", value: contentSecurityPolicy },
         ],
       },

@@ -13,9 +13,11 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:local:setup": "prisma generate --schema prisma/schema.local.prisma && prisma db push --schema prisma/schema.local.prisma",
     "db:normalize-accounts": "tsx prisma/normalize-account-types.ts",
+    "storage:migrate": "tsx prisma/migrate-media-storage.ts",
     "db:deploy": "node prisma/deploy-production.mjs && npm run db:normalize-accounts && npm run db:seed"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1106.0",
     "@prisma/client": "^6.13.0",
     "@types/multer": "^2.2.0",
     "bcryptjs": "^3.0.2",
