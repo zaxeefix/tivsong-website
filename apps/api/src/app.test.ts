@@ -1,4 +1,4 @@
-import {beforeAll,describe,expect,it} from "vitest";
+import {beforeAll,describe,expect,it,vi} from "vitest";
 import request from "supertest";
 import type {Express} from "express";
 
@@ -10,7 +10,7 @@ beforeAll(async()=>{
   Object.assign(process.env,{
     NODE_ENV:"test",
     WEB_URL:"http://localhost:3000",
-    DATABASE_URL:"postgresql://postgres:postgres@localhost:5432/tiv_songs_test",
+    DATABASE_URL:"file:./test.db",
     JWT_ACCESS_SECRET:"access-secret-that-is-at-least-32-characters",
     JWT_REFRESH_SECRET:"refresh-secret-that-is-at-least-32-characters",
     ADMIN_EMAIL:adminEmail,
@@ -18,8 +18,15 @@ beforeAll(async()=>{
     SUPER_ADMIN_EMAIL:"owner@example.com",
     SUPER_ADMIN_PASSWORD:"another-correct-horse-battery"
   });
+  const sessions=new Map<string,Record<string,unknown>>();
+  vi.doMock("./database/prisma.js",()=>({prisma:{adminSession:{
+    create:vi.fn(async({data}:{data:Record<string,unknown>})=>{sessions.set(String(data.id),data);return data}),
+    findUnique:vi.fn(async({where}:{where:{id:string}})=>sessions.get(where.id)||null),
+    update:vi.fn(async({where,data}:{where:{id:string};data:Record<string,unknown>})=>{const value={...sessions.get(where.id),...data};sessions.set(where.id,value);return value}),
+    updateMany:vi.fn(async({where,data}:{where:{refreshTokenHash?:string};data:Record<string,unknown>})=>{let count=0;for(const [id,value] of sessions)if(!where.refreshTokenHash||value.refreshTokenHash===where.refreshTokenHash){sessions.set(id,{...value,...data});count++}return {count}})
+  }}}));
   app=(await import("./app.js")).app;
-});
+},60_000);
 
 describe("API security boundaries",()=>{
   it("does not expose framework identity",async()=>{
@@ -77,5 +84,12 @@ describe("API security boundaries",()=>{
     expect(refreshed.status).toBe(200);
     expect(refreshed.body.refreshed).toBe(true);
     expect(refreshed.body.token).toBeUndefined();
+  });
+
+  it("revokes the administrator refresh session on logout",async()=>{
+    const agent=request.agent(app);
+    await agent.post("/api/admin/login").set("Origin","http://localhost:3000").send({email:adminEmail,password:adminPassword,remember:true}).expect(200);
+    await agent.post("/api/admin/logout").set("Origin","http://localhost:3000").expect(204);
+    await agent.post("/api/admin/refresh").set("Origin","http://localhost:3000").expect(401);
   });
 });

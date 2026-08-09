@@ -50,6 +50,8 @@ API start: `npm --workspace @tiv-songs/api run start`
 
 API pre-deploy: `npm run db:deploy`
 
+Run migrations only in Render's **Pre-Deploy Command**, never in both Build and Start commands. The deployment script retries Prisma's fixed 10-second PostgreSQL advisory-lock timeout, but it deliberately keeps advisory locking enabled to prevent concurrent schema changes. If Render shows lock contention, cancel older duplicate deploys and redeploy the newest commit.
+
 Web build: `npm ci && npm --workspace @tiv-songs/web run build`
 
 Web start: `npm --workspace @tiv-songs/web run start`

@@ -14,14 +14,16 @@ type Song = {id:string;title:string;description:string|null;status:string;audioU
 type Video = {id:string;title:string;description:string|null;status:string;videoUrl:string|null;artist:{stageName:string};category:{name:string}|null};
 type CommunityPost={id:string;title:string;description:string;country:string;region:string|null;city:string|null;eventDate:string;isUpcoming:boolean;mediaType:string;mediaUrl:string;status:string;user:{displayName:string;email:string}};
 type King = {id:string;ordinal:number;name:string;reignStart:string;reignEnd:string|null};
+type Category={id:string;name:string;slug:string};
 type Account = {id:string;email:string;username:string;displayName:string;status:string;createdAt:string;roles:string[];artist:{stageName:string;bio:string|null;verifiedAt:string|null}|null};
 type Overview = {artists:number;songs:number;publishedSongs:number;kings:number;users:number};
 type Donation = {enabled:boolean;bankName:string;accountName:string;accountNumber:string;paymentLink:string;message:string};
-type Tab = "accounts" | "songs" | "community" | "artists" | "heritage" | "donation" | "rewards" | "settings" | "hero" | "news" | "pages" | "comments" | "media" | "analytics" | "audit" | "search" | "email" | "backup";
+type Tab = "accounts" | "songs" | "categories" | "community" | "artists" | "heritage" | "donation" | "rewards" | "settings" | "hero" | "news" | "pages" | "comments" | "media" | "analytics" | "audit" | "search" | "email" | "backup";
 type ApiStatus="connecting"|"checking"|"connected"|"unavailable";
 const tabDetails:Record<Tab,{label:string;description:string}>={
   accounts:{label:"Accounts",description:"Approvals and access"},
   songs:{label:"Songs",description:"Audio and video review"},
+  categories:{label:"Categories",description:"Music and video taxonomy"},
   community:{label:"Community",description:"Activities and events"},
   artists:{label:"Artists",description:"Profiles and contributors"},
   heritage:{label:"Heritage",description:"Tor Tiv records"},
@@ -75,6 +77,7 @@ export default function AdminPage(){
   const [videos,setVideos]=useState<Video[]>([]);
   const [community,setCommunity]=useState<CommunityPost[]>([]);
   const [kings,setKings]=useState<King[]>([]);
+  const [categories,setCategories]=useState<Category[]>([]);
   const [accounts,setAccounts]=useState<Account[]>([]);
   const [message,setMessage]=useState("");
   const [error,setError]=useState("");
@@ -84,18 +87,19 @@ export default function AdminPage(){
 
   const load = useCallback(async()=>{
     try{
-      const [summary,artistItems,songItems,videoItems,kingItems,accountItems,communityItems]=await Promise.all([
+      const [summary,artistItems,songItems,videoItems,kingItems,accountItems,communityItems,categoryItems]=await Promise.all([
         api<Overview>("/admin/overview"),
         api<Artist[]>("/admin/artists"),
         api<Song[]>("/admin/songs"),
         api<Video[]>("/admin/videos"),
         api<King[]>("/admin/tor-tiv"),
         api<Account[]>("/admin/accounts"),
-        api<CommunityPost[]>("/admin/community")
+        api<CommunityPost[]>("/admin/community"),
+        api<Category[]>("/categories")
       ]);
       const role=sessionStorage.getItem("tiv-admin-role")||"admin";
       if(role==="super_admin")setDonation(await api<Donation>("/admin/donation"));
-      setAdminRole(role);setOverview(summary);setArtists(artistItems);setSongs(songItems);setVideos(videoItems);setKings(kingItems);setAccounts(accountItems);setCommunity(communityItems);setAuthenticated(true);setError("");
+      setAdminRole(role);setOverview(summary);setArtists(artistItems);setSongs(songItems);setVideos(videoItems);setKings(kingItems);setAccounts(accountItems);setCommunity(communityItems);setCategories(categoryItems);setAuthenticated(true);setError("");
     }catch(reason){
       setError(reason instanceof Error ? reason.message : "Unable to load admin");
       if ((reason as Error).message.includes("session")) {sessionStorage.removeItem("tiv-admin-auth");setAuthenticated(false);}
@@ -165,11 +169,12 @@ export default function AdminPage(){
     <header className={styles.header}><div className={styles.brand}><Image className={styles.logo} src="/assets/tiv-song-logo.jpeg" alt="" width={52} height={52}/><div><h1 className={styles.title}>Tiv Songs Admin</h1><span className={styles.muted}>Content and heritage management</span></div></div><div className={styles.rowActions}><ThemeToggle className={styles.themeToggle}/><Link className={styles.button} href="/">View website</Link><button className={styles.button} onClick={async()=>{await api("/admin/logout",{method:"POST"});sessionStorage.removeItem("tiv-admin-auth");sessionStorage.removeItem("tiv-admin-role");setAuthenticated(false)}}>Log out</button></div></header>
     {overview&&<section className={styles.stats}>{Object.entries(overview).map(([label,value])=><div className={styles.stat} key={label}><strong>{value}</strong><span className={styles.muted}>{label.replace(/([A-Z])/g," $1")}</span></div>)}</section>}
     <div className={styles.workspace}>
-    <nav className={styles.tabs} aria-label="Admin sections">{(["settings","hero","news","pages","accounts","songs","community","artists","heritage","rewards","comments","media","analytics","audit","search","email","backup",...(adminRole==="super_admin"?["donation" as const]:[])] as Tab[]).map(item=><button key={item} type="button" onClick={()=>setTab(item)} aria-current={tab===item?"page":undefined} aria-controls={`admin-panel-${item}`} className={`${styles.button} ${tab===item?styles.active:""}`}><span>{tabDetails[item].label}</span><small>{tabDetails[item].description}</small></button>)}</nav>
+    <nav className={styles.tabs} aria-label="Admin sections">{(["settings","hero","news","pages","accounts","songs","categories","community","artists","heritage","rewards","comments","media","analytics","audit","search","email","backup",...(adminRole==="super_admin"?["donation" as const]:[])] as Tab[]).map(item=><button key={item} type="button" onClick={()=>setTab(item)} aria-current={tab===item?"page":undefined} aria-controls={`admin-panel-${item}`} className={`${styles.button} ${tab===item?styles.active:""}`}><span>{tabDetails[item].label}</span><small>{tabDetails[item].description}</small></button>)}</nav>
     <div className={styles.content} id={`admin-panel-${tab}`}>
     {error&&<p className={styles.error}>{error}</p>}{message&&<p className={styles.success}>{message}</p>}
     {tab==="accounts"&&<section className={styles.panel}><UserManagement isSuperAdmin={adminRole==="super_admin"}/></section>}
     {tab==="rewards"&&<section className={styles.panel}><RewardsPanel/></section>}
+    {tab==="categories"&&<section className={`${styles.panel} ${styles.columns}`}><form className={styles.form} onSubmit={event=>submit(event,"/admin/categories")}><h2>Add category</h2><label>Name<input name="name" required minLength={2}/></label><label>Slug<input name="slug" required pattern="[a-z0-9-]+" placeholder="traditional-songs"/></label><button className={`${styles.button} ${styles.primary}`}>Create category</button></form><div className={styles.list}>{categories.map(category=><article className={styles.row} key={category.id}><div><h3>{category.name}</h3><p>{category.slug}</p></div><button className={`${styles.button} ${styles.danger}`} onClick={()=>remove(`/admin/categories/${category.id}`)}>Delete</button></article>)}{!categories.length&&<div className={styles.empty}>No categories configured.</div>}</div></section>}
     {tab==="artists"&&<section className={`${styles.panel} ${styles.columns}`}><form className={styles.form} onSubmit={event=>submit(event,"/admin/artists")}><h2>Add artist</h2><label>Account email<input name="email" type="email" required/></label><label>Username<input name="username" required/></label><label>Display name<input name="displayName" required/></label><label>Stage name<input name="stageName" required/></label><label>Biography<textarea name="bio"/></label><label>Image URL<input name="imageUrl" type="url"/></label><button className={`${styles.button} ${styles.primary}`}>Create artist</button></form><div className={styles.list}>{artists.length?artists.map(artist=><article className={styles.row} key={artist.id}><div><h3>{artist.stageName}</h3><p>{artist.user.displayName} · {artist.user.email}</p></div></article>):<div className={styles.empty}>No artists yet.</div>}</div></section>}
     {tab==="songs"&&<section className={styles.panel}><div className={styles.panelHead}><div><h2>Audio and video review</h2><p className={styles.muted}>Play each submission completely, check language and ownership, then publish or reject it.</p></div></div><div className={styles.list}>{songs.map(song=><article className={`${styles.row} ${styles.mediaRow}`} key={song.id}><div><h3>{song.title}</h3><p>Audio · {song.artist.stageName} · {song.category?.name||"Uncategorized"}</p><p className={styles.reviewDescription}>{song.description||"No description was provided."}</p>{song.audioUrl?<audio className={styles.audioPlayer} controls preload="none" src={song.audioUrl}/>:<p>No playable file attached.</p>}</div><div className={styles.rowActions}><span className={styles.status}>{song.status}</span>{song.status!=="PUBLISHED"&&<button className={`${styles.button} ${styles.primary}`} onClick={()=>api(`/admin/songs/${song.id}/status`,{method:"PATCH",body:JSON.stringify({status:"PUBLISHED"})}).then(load)}>Approve &amp; publish</button>}{song.status!=="REJECTED"&&<button className={styles.button} onClick={()=>api(`/admin/songs/${song.id}/status`,{method:"PATCH",body:JSON.stringify({status:"REJECTED"})}).then(load)}>Reject</button>}<button className={`${styles.button} ${styles.danger}`} onClick={()=>remove(`/admin/songs/${song.id}`)}>Delete</button></div></article>)}{videos.map(video=><article className={`${styles.row} ${styles.mediaRow}`} key={video.id}><div><h3>{video.title}</h3><p>Video · {video.artist.stageName} · {video.category?.name||"Uncategorized"}</p><p className={styles.reviewDescription}>{video.description||"No description was provided."}</p>{video.videoUrl?<video className={styles.videoPlayer} controls preload="metadata" src={video.videoUrl}/>:<p>No playable file attached.</p>}</div><div className={styles.rowActions}><span className={styles.status}>{video.status}</span>{video.status!=="PUBLISHED"&&<button className={`${styles.button} ${styles.primary}`} onClick={()=>api(`/admin/videos/${video.id}/status`,{method:"PATCH",body:JSON.stringify({status:"PUBLISHED"})}).then(load)}>Approve &amp; publish</button>}{video.status!=="REJECTED"&&<button className={styles.button} onClick={()=>api(`/admin/videos/${video.id}/status`,{method:"PATCH",body:JSON.stringify({status:"REJECTED"})}).then(load)}>Reject</button>}<button className={`${styles.button} ${styles.danger}`} onClick={()=>remove(`/admin/videos/${video.id}`)}>Delete</button></div></article>)}{!songs.length&&!videos.length&&<div className={styles.empty}>No media submissions yet.</div>}</div></section>}
     {tab==="heritage"&&<section className={`${styles.panel} ${styles.columns}`}><form className={styles.form} onSubmit={event=>submit(event,"/admin/tor-tiv")}><h2>Add Tor Tiv</h2><label>Ordinal<input name="ordinal" type="number" min="1" required/></label><label>Name<input name="name" required/></label><label>Reign began<input name="reignStart" type="date" required/></label><label>Reign ended<input name="reignEnd" type="date"/></label><label>Portrait URL<input name="portraitUrl" type="url"/></label><label>Biography<textarea name="biography" required/></label><label>Source URL<input name="sourceUrl" type="url"/></label><button className={`${styles.button} ${styles.primary}`}>Add ruler</button></form><div className={styles.list}>{kings.length?kings.map(king=><article className={styles.row} key={king.id}><div><h3>Tor Tiv {king.ordinal}: {king.name}</h3><p>{new Date(king.reignStart).getFullYear()} – {king.reignEnd?new Date(king.reignEnd).getFullYear():"Present"}</p></div><button className={`${styles.button} ${styles.danger}`} onClick={()=>remove(`/admin/tor-tiv/${king.id}`)}>Delete</button></article>):<div className={styles.empty}>No heritage records yet.</div>}</div></section>}

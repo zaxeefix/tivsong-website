@@ -253,6 +253,19 @@ model Video {
   @@index([contributorId, status, createdAt])
 }
 
+model AdminSession {
+  id String @id @default(cuid())
+  email String
+  role String
+  refreshTokenHash String @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  ipAddress String?
+  createdAt DateTime @default(now())
+  @@index([email, expiresAt])
+}
+
 model ReferralVisit {
   id String @id @default(cuid())
   referrerId String
@@ -437,12 +450,16 @@ model Upload {
   kind       String
   provider   String
   storageKey String
+  entityType String?
+  entityId   String?
   mimeType   String
   sizeBytes  BigInt
   checksum   String?
   status     MediaStatus @default(PROCESSING)
   user       User        @relation(fields: [userId], references: [id])
   createdAt  DateTime    @default(now())
+
+  @@index([entityType, entityId])
 }
 
 model TorTiv {
@@ -548,9 +565,33 @@ model CmsComment {
   moderatedAt DateTime?
   parent CmsComment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies CmsComment[] @relation("CommentReplies")
+  likes CmsCommentLike[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   @@index([targetType, targetId, status, createdAt])
+}
+
+model CmsCommentLike {
+  commentId String
+  userId String
+  comment CmsComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@id([commentId, userId])
+  @@index([userId, createdAt])
+}
+
+model MediaEngagement {
+  id String @id @default(cuid())
+  entityType String
+  entityId String
+  event String
+  visitorHash String
+  bucket String
+  userId String?
+  createdAt DateTime @default(now())
+  @@unique([entityType, entityId, event, visitorHash, bucket])
+  @@index([entityType, entityId, event, createdAt])
+  @@index([userId, createdAt])
 }
 
 model MediaAsset {
