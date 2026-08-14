@@ -102,7 +102,7 @@ const runFfmpeg=(args:string[])=>new Promise<void>((resolve,reject)=>{
   if(!ffmpegExecutable)return reject(new Error("FFmpeg is unavailable"));
   const child=spawn(ffmpegExecutable,args,{windowsHide:true});
   let error="";
-  const timer=setTimeout(()=>{child.kill();reject(new Error("Media optimization exceeded 150 seconds"))},150_000);
+  const timer=setTimeout(()=>{child.kill();reject(new Error("Media optimization exceeded 60 minutes"))},60*60_000);
   child.stderr.on("data",(chunk:Buffer)=>{error+=String(chunk).slice(-2000)});
   child.on("error",failure=>{clearTimeout(timer);reject(failure)});
   child.on("close",(code:number|null)=>{clearTimeout(timer);code===0?resolve():reject(new Error(error||`FFmpeg exited with code ${code}`))});
