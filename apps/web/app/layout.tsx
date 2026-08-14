@@ -26,5 +26,5 @@ const themeBootstrap=`(()=>{try{const saved=localStorage.getItem("tiv-songs-them
 const structuredData={"@context":"https://schema.org","@type":"WebSite",name:"Tiv Songs",url:siteUrl,description:"The digital home of Tiv music and cultural heritage.",potentialAction:{"@type":"SearchAction",target:`${siteUrl}/?q={search_term_string}`,"query-input":"required name=search_term_string"}};
 
 export default function Layout({children}:{children:React.ReactNode}){
-  return <html lang="en" data-theme="light" suppressHydrationWarning><head><meta name="theme-color" content="#FAF8F3"/><script dangerouslySetInnerHTML={{__html:themeBootstrap}}/><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(structuredData)}}/></head><body>{children}<SocialMediaBar/><CmsRuntime/><PwaManager/></body></html>;
+  return <html lang="en" data-theme="light" suppressHydrationWarning><head><meta name="theme-color" content="#FFFFFF"/><script dangerouslySetInnerHTML={{__html:themeBootstrap}}/><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(structuredData)}}/></head><body>{children}<SocialMediaBar/><CmsRuntime/><PwaManager/></body></html>;
 }
