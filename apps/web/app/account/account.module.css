@@ -13,3 +13,10 @@
 :global(html[data-theme="light"]) .page{--bg:#fff5ef;--surface:#fff;--card:#f6e9fb;--text:#26003f;--muted:#685474;--line:#d7bfdc;--accent:#4d0f78}
 :global(html[data-theme="light"]) .primary{background:#4d0f78;color:#fff}:global(html[data-theme="light"]) .approved{background:#ffe0cc;color:#4a1430}:global(html[data-theme="light"]) .pending{background:#ead8f4;color:#45116a}
 .navActions{overflow-x:auto;scrollbar-width:none}.navActions::-webkit-scrollbar{display:none}.navLink{white-space:nowrap}
+
+/* Tiv textile identity */
+.page{--bg:#242321;--surface:#302e2b;--card:#393632;--text:#f8f6f1;--muted:#c9c3ba;--line:#5b5650;--accent:#d39a76;background:var(--bg)}
+.nav{position:relative;background:#242321;border-bottom:5px solid transparent;border-image:repeating-linear-gradient(90deg,#111 0 8px,#fff 8px 13px,#111 13px 16px,#fff 16px 22px) 1}
+.card{position:relative;overflow:hidden}.card:before{content:"";position:absolute;inset:0 auto 0 0;width:6px;background:repeating-linear-gradient(0deg,#111 0 9px,#fff 9px 15px);opacity:.9}.primary{background:#b77952;color:#171717}.accountTypes .selected{outline-color:#d39a76}
+.form :global(.location-status){grid-column:1/-1;margin:0;color:var(--muted);font-size:.76rem}.form select:disabled,.form input:disabled{cursor:not-allowed;opacity:.62}
+:global(html[data-theme="light"]) .page{--bg:#faf8f3;--surface:#fff;--card:#f4f1ea;--text:#171717;--muted:#57534e;--line:#e5e1da;--accent:#a65d3b}:global(html[data-theme="light"]) .nav{background:#fff}:global(html[data-theme="light"]) .primary{background:#a65d3b;color:#fff}

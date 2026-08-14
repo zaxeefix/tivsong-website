@@ -34,3 +34,6 @@
 @media(max-width:1000px){.cmsColumns{grid-template-columns:1fr}.mediaGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.cmsForm fieldset,.mediaGrid{grid-template-columns:1fr}.wide{grid-column:auto}.inlineForm{display:grid}.cmsToolbar{flex-direction:column}}
 .socialSetting{display:grid;gap:10px;padding:14px;border:1px solid var(--admin-line);border-radius:10px;background:var(--admin-bg)}.socialSetting>strong{text-transform:capitalize}.socialSetting label{display:grid;gap:5px}
+
+.shell{--admin-bg:#242321;--admin-surface:#302e2b;--admin-card:#393632;--admin-text:#f8f6f1;--admin-muted:#c9c3ba;--admin-line:#5b5650}.header{border-bottom:5px solid transparent;border-image:repeating-linear-gradient(90deg,#111 0 8px,#fff 8px 13px,#111 13px 16px,#fff 16px 22px) 1}.primary,.active{background:#b77952;color:#171717;border-color:#b77952}
+:global(html[data-theme="light"]) .shell{--admin-bg:#faf8f3;--admin-surface:#fff;--admin-card:#f4f1ea;--admin-text:#171717;--admin-muted:#57534e;--admin-line:#e5e1da}:global(html[data-theme="light"]) .primary,:global(html[data-theme="light"]) .active{background:#a65d3b;color:#fff;border-color:#a65d3b}

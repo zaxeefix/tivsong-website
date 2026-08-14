@@ -17,6 +17,7 @@ import { prisma } from "../database/prisma.js";
 import {openapiDocument,swaggerHtml} from "../docs/openapi.js";
 import {adminLogger,securityLogger} from "../platform/logger.js";
 import {deleteObject,getObject,persistFile} from "../platform/storage.js";
+import {isNigeria,validateNigeriaLocation} from "../platform/nigeria-locations.js";
 
 export const api = Router();
 api.use(["/account","/admin"],(_req,res,next)=>{
@@ -300,9 +301,9 @@ const accountRegisterSchema=z.object({
   avatarUrl:storedProfileImageSchema.optional().or(z.literal("")),
   coverImageUrl:z.string().url().max(500).optional().or(z.literal("")),
   phoneNumber:z.string().min(7).max(30).optional(),
-  country:z.string().min(2).max(100).optional(),
-  state:z.string().max(120).optional(),
-  localGovernment:z.string().max(120).optional(),
+  country:z.string().trim().min(2).max(100).optional(),
+  state:z.string().trim().max(120).optional(),
+  localGovernment:z.string().trim().max(120).optional(),
   genre:z.string().max(100).optional(),
   socialLinks:z.record(z.string(),z.string().url().max(500)).optional(),
   identityDocumentUrl:z.string().url().max(500).optional().or(z.literal("")),
@@ -311,6 +312,10 @@ const accountRegisterSchema=z.object({
 }).superRefine((value,context)=>{
   if(value.accountType==="artist"&&!value.stageName){
     context.addIssue({code:"custom",path:["stageName"],message:"Stage name is required for artist registration"});
+  }
+  if(isNigeria(value.country)){
+    const location=validateNigeriaLocation(value.state,value.localGovernment);
+    if(!location.valid)context.addIssue({code:"custom",path:[location.field],message:location.message});
   }
 });
 
