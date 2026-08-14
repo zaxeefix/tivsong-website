@@ -7,3 +7,13 @@ body,button,input,textarea,select{font-family:var(--font-sans)}
 body{font-size:var(--text-base);line-height:var(--leading-body)}
 h1,h2,h3{line-height:var(--leading-tight);text-wrap:balance}
 p{line-height:var(--leading-body)}
+
+/* Tiv Songs cultural design system: textile details stay on edges and dividers. */
+:root{--tiv-ivory:#faf8f3;--tiv-white:#fff;--tiv-pearl:#f4f1ea;--tiv-charcoal:#171717;--tiv-graphite:#484848;--tiv-border:#e5e1da;--tiv-black:#111;--tiv-terracotta:#a65d3b;--tiv-bronze:#b77952;--tiv-taupe:#b89a83;--tiv-weave:repeating-linear-gradient(90deg,#111 0 7px,#fff 7px 12px,#111 12px 14px,#fff 14px 20px)}
+html[data-theme="light"] body{background:var(--tiv-ivory);color:var(--tiv-charcoal)}html[data-theme="dark"] body{background:#242321;color:#f8f6f1}body{overflow-x:hidden}
+:is(a,button,input,select,textarea):focus-visible{outline:3px solid var(--tiv-terracotta);outline-offset:3px}
+header{border-bottom:5px solid transparent;border-image:var(--tiv-weave) 1}header nav a{transition:color .18s ease,transform .18s ease}header nav a:hover{color:#fff;transform:translateY(-1px)}
+.section{background:var(--tiv-pearl)}.sectionHead{position:relative;border-color:var(--tiv-black)}.sectionHead:before{content:"";display:block;width:108px;height:7px;margin-bottom:18px;border-radius:999px;background:var(--tiv-weave)}
+.card{border-color:var(--tiv-border);box-shadow:0 16px 46px rgba(32,27,23,.08);transition:transform .2s ease,box-shadow .2s ease}.card:hover{transform:translateY(-4px);box-shadow:0 22px 58px rgba(32,27,23,.13)}.cardBody small{color:var(--tiv-terracotta)}
+html[data-theme="dark"] .section{background:#242321}html[data-theme="dark"] .card{background:#302e2b;border-color:#53504b}html[data-theme="dark"] .cardBody small{color:#d9a07f}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.card,header nav a{transition:none!important}}

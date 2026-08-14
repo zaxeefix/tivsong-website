@@ -8,6 +8,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@some19ice/nigeria-geo-core": "^0.1.4",
     "@tanstack/react-query": "^5.83.0",
     "framer-motion": "^12.23.12",
     "next": "^16.2.12",
