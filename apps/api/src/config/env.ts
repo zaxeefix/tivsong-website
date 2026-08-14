@@ -15,7 +15,7 @@ const schema = z.object({
   SUPER_ADMIN_EMAIL: z.string().email().optional(),
   SUPER_ADMIN_PASSWORD: z.string().min(12).optional(),
   UPLOAD_DIR: z.string().default("uploads"),
-  MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(500).default(100),
+  MAX_UPLOAD_MB: z.coerce.number().int().min(1).max(1024).default(1024),
   MAX_TRANSCODES: z.coerce.number().int().min(1).max(8).default(2),
   VIRUS_SCAN_URL:z.string().url().optional(),
   STORAGE_PROVIDER:z.enum(["local","s3"]).default("local"),
