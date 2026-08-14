@@ -30,7 +30,12 @@ async function request<T>(path:string,options:RequestInit={}):Promise<T>{
     const refreshed=await fetch(`${apiBase}/account/refresh`,{method:"POST",credentials:"include"}).catch(()=>null);
     if(refreshed?.ok)return request<T>(path,{...options,headers:{...options.headers,"X-Session-Retry":"1"}});
   }
-  if(!response.ok)throw new Error(body?.error||`Request failed (${response.status})`);
+  if(!response.ok){
+    const fieldErrors=body?.details?.fieldErrors as Record<string,string[]>|undefined;
+    const fieldIssue=fieldErrors&&Object.entries(fieldErrors).find(([,messages])=>messages?.length);
+    const message=fieldIssue?`${fieldIssue[0]}: ${fieldIssue[1][0]}`:body?.error;
+    throw new Error(message||`Request failed (${response.status})`);
+  }
   return body;
 }
 
