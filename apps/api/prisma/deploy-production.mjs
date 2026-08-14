@@ -3,9 +3,29 @@ import {spawn} from "node:child_process";
 const maximumAttempts=5;
 const transientPattern=/P1001|P1002|advisory lock|database server is running|timed out trying to acquire/i;
 const executable=process.platform==="win32"?"npx.cmd":"npx";
+const pooledDatabaseUrl=process.env.DATABASE_URL?.trim();
+const directDatabaseUrl=process.env.DIRECT_URL?.trim();
+
+if(!pooledDatabaseUrl){
+  console.error("DATABASE_URL is required for database deployment.");
+  process.exit(1);
+}
+if(/-pooler\./i.test(pooledDatabaseUrl)&&!directDatabaseUrl){
+  console.error("DIRECT_URL is required for Prisma migrations when DATABASE_URL uses a Neon pooled hostname. Copy the Direct connection string from Neon and add it to Render as DIRECT_URL.");
+  process.exit(1);
+}
+
+const migrationUrl=(()=>{
+  const value=directDatabaseUrl||pooledDatabaseUrl;
+  try{
+    const parsed=new URL(value);
+    if(!parsed.searchParams.has("connect_timeout"))parsed.searchParams.set("connect_timeout","30");
+    return parsed.toString();
+  }catch{return value}
+})();
 
 const migrate=()=>new Promise(resolve=>{
-  const child=spawn(executable,["prisma","migrate","deploy"],{cwd:process.cwd(),env:process.env,windowsHide:true});
+  const child=spawn(executable,["prisma","migrate","deploy"],{cwd:process.cwd(),env:{...process.env,DATABASE_URL:migrationUrl},windowsHide:true});
   let output="";
   child.stdout.on("data",chunk=>{const text=String(chunk);output+=text;process.stdout.write(text)});
   child.stderr.on("data",chunk=>{const text=String(chunk);output+=text;process.stderr.write(text)});

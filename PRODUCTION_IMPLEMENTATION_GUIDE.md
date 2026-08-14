@@ -17,6 +17,7 @@ NODE_ENV=production
 PORT=4000
 WEB_URL=https://tivsong-website-web.vercel.app
 DATABASE_URL=<Render PostgreSQL connection string>
+DIRECT_URL=<Neon direct connection string for migrations; hostname must not contain -pooler>
 JWT_ACCESS_SECRET=<at least 32 random characters>
 JWT_REFRESH_SECRET=<a different 32+ character secret>
 ADMIN_EMAIL=<administrator email>
@@ -36,6 +37,8 @@ VIRUS_SCAN_URL=<recommended production scanning service URL>
 ```
 
 The API intentionally refuses to start in production with `STORAGE_PROVIDER=local`, preventing silent media loss on an ephemeral Render filesystem.
+
+Keep `DATABASE_URL` as the pooled Neon connection for normal API traffic. In the Neon **Connect** dialog, disable connection pooling and copy that connection string into Render as `DIRECT_URL`. The deployment script uses `DIRECT_URL` only for Prisma migrations and rejects a pooled Neon migration configuration with an actionable error.
 
 Copy the endpoint and region exactly from the Backblaze Buckets page. Create a bucket-restricted Application Key with read and write access. Do not use the Backblaze account password and do not add these server-only credentials to Vercel.
 

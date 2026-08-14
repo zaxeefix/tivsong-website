@@ -81,6 +81,7 @@ See `.env.example`. Production requires:
 - `NODE_ENV=production`
 - `WEB_URL`, `API_URL`, `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SITE_URL`
 - `DATABASE_URL`
+- `DIRECT_URL` (Neon direct/unpooled connection used by Prisma migrations)
 - independent JWT secrets
 - distinct administrator credentials
 - upload limits, scanner and storage credentials
