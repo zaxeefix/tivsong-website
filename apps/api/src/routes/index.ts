@@ -284,6 +284,11 @@ const adminLoginSchema = z.object({
   remember:z.boolean().optional().default(false)
 });
 
+const storedProfileImageSchema=z.union([
+  z.string().url().max(500),
+  z.string().max(500).regex(/^\/api\/media\/(?:object|community)\//,"Invalid stored profile image path")
+]);
+
 const accountRegisterSchema=z.object({
   accountType:z.enum(["individual","artist"]),
   displayName:z.string().min(2).max(100),
@@ -292,7 +297,7 @@ const accountRegisterSchema=z.object({
   password:z.string().min(8).max(100),
   stageName:z.string().min(2).max(100).optional(),
   bio:z.string().max(2000).optional(),
-  avatarUrl:z.string().url().max(500).optional().or(z.literal("")),
+  avatarUrl:storedProfileImageSchema.optional().or(z.literal("")),
   coverImageUrl:z.string().url().max(500).optional().or(z.literal("")),
   phoneNumber:z.string().min(7).max(30).optional(),
   country:z.string().min(2).max(100).optional(),
