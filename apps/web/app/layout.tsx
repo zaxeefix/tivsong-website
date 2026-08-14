@@ -22,9 +22,9 @@ export const metadata:Metadata={
   manifest:"/manifest.webmanifest"
 };
 
-const themeBootstrap=`(()=>{try{const saved=localStorage.getItem("tiv-songs-theme");const theme=saved==="light"||saved==="dark"?saved:(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark");document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme}catch{document.documentElement.dataset.theme="dark";document.documentElement.style.colorScheme="dark"}})()`;
+const themeBootstrap=`(()=>{try{const saved=localStorage.getItem("tiv-songs-theme");const theme=saved==="light"||saved==="dark"?saved:"light";document.documentElement.dataset.theme=theme;document.documentElement.style.colorScheme=theme}catch{document.documentElement.dataset.theme="light";document.documentElement.style.colorScheme="light"}})()`;
 const structuredData={"@context":"https://schema.org","@type":"WebSite",name:"Tiv Songs",url:siteUrl,description:"The digital home of Tiv music and cultural heritage.",potentialAction:{"@type":"SearchAction",target:`${siteUrl}/?q={search_term_string}`,"query-input":"required name=search_term_string"}};
 
 export default function Layout({children}:{children:React.ReactNode}){
-  return <html lang="en" data-theme="dark" suppressHydrationWarning><head><meta name="theme-color" content="#242321"/><script dangerouslySetInnerHTML={{__html:themeBootstrap}}/><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(structuredData)}}/></head><body>{children}<SocialMediaBar/><CmsRuntime/><PwaManager/></body></html>;
+  return <html lang="en" data-theme="light" suppressHydrationWarning><head><meta name="theme-color" content="#FAF8F3"/><script dangerouslySetInnerHTML={{__html:themeBootstrap}}/><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(structuredData)}}/></head><body>{children}<SocialMediaBar/><CmsRuntime/><PwaManager/></body></html>;
 }
