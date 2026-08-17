@@ -1,7 +1,7 @@
-const VERSION="tiv-songs-v1.0.0";
+const VERSION="tiv-songs-v1.0.1";
 const STATIC_CACHE=`${VERSION}-static`;
 const PAGE_CACHE=`${VERSION}-pages`;
-const PRECACHE=["/offline.html","/assets/tiv-song-logo.jpeg","/icon-192.png","/icon-512.png","/assets/theme.js","/assets/site-footer.css"];
+const PRECACHE=["/offline.html","/assets/tiv-song-logo.jpeg","/icon-192.png","/icon-512.png","/assets/theme.js","/assets/site-footer.css","/assets/monochrome.css"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(STATIC_CACHE).then(cache=>cache.addAll(PRECACHE))));
 self.addEventListener("activate",event=>event.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(key=>!key.startsWith(VERSION)).map(key=>caches.delete(key)))),self.clients.claim()])));
 self.addEventListener("message",event=>{if(event.data?.type==="SKIP_WAITING")self.skipWaiting()});

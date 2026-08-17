@@ -58,3 +58,10 @@ html[data-theme="light"] [class*="__hero"]:not([class*="HeroSlider-module"]){bac
 html[data-theme="light"] :is([class*="__type"],[class*="__location"],[class*="__eyebrow"],[class*="__source"],[class*="__back"]){color:#000!important}html[data-theme="dark"] :is([class*="__type"],[class*="__location"],[class*="__eyebrow"],[class*="__source"],[class*="__back"]){color:#fff!important}
 [class*="HeroSlider-module"][class*="__media"],.portrait img{filter:grayscale(1)!important}
 :is(a,button,input,select,textarea):focus-visible{outline-color:currentColor!important}
+
+/* Cover component surfaces that do not inherit page palette variables. */
+html[data-theme="light"] :is([class*="__tools"],[class*="__overlay"],[class*="__results"],[class*="__close"],[class*="__media"],[class*="__avatar"],[class*="__tableWrap"],[class*="__drawer"],[class*="__panel"],[class*="__skeleton"]){--brand:#000!important;background-color:#fff!important;background-image:none!important;color:#000!important;border-color:#000!important}
+html[data-theme="dark"] :is([class*="__tools"],[class*="__overlay"],[class*="__results"],[class*="__close"],[class*="__media"],[class*="__avatar"],[class*="__tableWrap"],[class*="__drawer"],[class*="__panel"],[class*="__skeleton"]){--brand:#fff!important;background-color:#000!important;background-image:none!important;color:#fff!important;border-color:#fff!important}
+html[data-theme="light"] :is([class*="__button"],[class*="__selected"],[class*="__badge"],[class*="__status"]){--brand:#000!important;background-color:#000!important;color:#fff!important;border-color:#000!important}
+html[data-theme="dark"] :is([class*="__button"],[class*="__selected"],[class*="__badge"],[class*="__status"]){--brand:#fff!important;background-color:#fff!important;color:#000!important;border-color:#fff!important}
+html[data-theme] [class*="__option"]{--brand:currentColor!important;text-shadow:none!important;box-shadow:none!important}
