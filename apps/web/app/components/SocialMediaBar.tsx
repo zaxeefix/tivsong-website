@@ -5,7 +5,9 @@ import {usePathname} from "next/navigation";
 import {useEffect,useState} from "react";
 import styles from "./SocialMediaBar.module.css";
 
-type Settings={utilityDock:{position:"right"|"left";visibility:"entire"|"homepage";liveStatus:"online"|"offline";reportUrl:string;searchEnabled:boolean;shareEnabled:boolean}};
+type Platform="facebook"|"tiktok"|"youtube"|"audiomack";
+type Social={platform:Platform;enabled:boolean;url:string;order:number};
+type Settings={utilityDock:{position:"right"|"left";visibility:"entire"|"homepage";liveStatus:"online"|"offline";reportUrl:string;searchEnabled:boolean;shareEnabled:boolean};general?:{socialMedia?:Social[];socialLinks?:Partial<Record<Platform,string>>}};
 type SearchResult={id:string;title?:string;stageName?:string;name?:string;slug?:string};
 type SearchData=Record<string,SearchResult[]>;
 
@@ -13,17 +15,20 @@ function Icon({name}:{name:"menu"|"search"|"top"|"share"|"report"|"bell"|"close"
   const paths={menu:"M4 7h16M4 12h16M4 17h16",search:"m21 21-4.3-4.3M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z",top:"m18 15-6-6-6 6",share:"M12 16V3m0 0L7 8m5-5 5 5M5 13v7h14v-7",report:"M12 9v4m0 4h.01M10.3 3.7 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.7a2 2 0 0 0-3.4 0Z",bell:"M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12h4",close:"M6 6l12 12M18 6 6 18"}[name];
   return <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d={paths}/></svg>;
 }
+function SocialIcon({platform}:{platform:Platform}){const paths={facebook:"M14 8h3V4.5c-.5-.1-2.2-.2-4.1-.2-4 0-6.7 2.4-6.7 6.8V15H2v4h4.2v10h5.1V19h4.2l.7-4h-4.9v-3.5C11.3 10.3 11.7 8 14 8Z",tiktok:"M16.7 2c.3 2.6 1.8 4.1 4.3 4.3v4.2a10 10 0 0 1-4.2-1v7.7A6.8 6.8 0 1 1 11 10.5v4.3a2.6 2.6 0 1 0 1.6 2.4V2h4.1Z",youtube:"M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4L15.8 12l-6.2 3.6Z",audiomack:"m2 16 2-8 2 8 2.3-12L11 18l2.4-9 2.1 7 2.2-11L22 18h-3l-1-4.2L16.5 20h-2.4L13 16l-1.2 4H9.2L8 13l-1 5H4.5L3.8 15 3 18H1l1-2Z"}[platform];return <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" stroke="none" d={paths}/></svg>}
 
 export default function SocialMediaBar(){
   const pathname=usePathname();const [settings,setSettings]=useState<Settings|null>(null);const [expanded,setExpanded]=useState(false);const [searchOpen,setSearchOpen]=useState(false);const [shareOpen,setShareOpen]=useState(false);const [showTop,setShowTop]=useState(false);const [notifications,setNotifications]=useState(0);
   useEffect(()=>{const load=()=>fetch("/api/cms/settings",{cache:"no-store"}).then(r=>r.ok?r.json():null).then(setSettings).catch(()=>undefined);let signedIn=sessionStorage.getItem("tiv-account-auth")==="1";const loadNotifications=()=>{if(!signedIn)return Promise.resolve();return fetch("/api/account/notifications",{credentials:"include"}).then(async r=>{if(r.status===401){signedIn=false;sessionStorage.removeItem("tiv-account-auth");setNotifications(0);return null}return r.ok?r.json():null}).then(data=>setNotifications(data?.unread||0)).catch(()=>undefined)};void load();void loadNotifications();const scroll=()=>setShowTop(scrollY>300);addEventListener("scroll",scroll,{passive:true});const timer=setInterval(loadNotifications,30_000);return()=>{removeEventListener("scroll",scroll);clearInterval(timer)}},[]);
   if(pathname.startsWith("/admin")||(settings?.utilityDock.visibility==="homepage"&&pathname!=="/"))return null;
   const dock=settings?.utilityDock||{position:"right",visibility:"entire",liveStatus:"online",reportUrl:"mailto:support@tivsongs.com",searchEnabled:true,shareEnabled:true};
+  const socials=(settings?.general?.socialMedia||[]).map(item=>({...item,url:item.url||settings?.general?.socialLinks?.[item.platform]||""})).filter(item=>item.enabled&&item.url).sort((a,b)=>a.order-b.order);
   const share=()=>setShareOpen(true);
   return <><motion.aside className={`${styles.dock} ${dock.position==="left"?styles.left:""}`} aria-label="Website utility dock" initial={{opacity:0,x:dock.position==="left"?-18:18}} animate={{opacity:1,x:0}}>
     <button className={styles.mobileToggle} aria-label={expanded?"Close utility dock":"Open utility dock"} aria-expanded={expanded} onClick={()=>setExpanded(value=>!value)}><Icon name={expanded?"close":"menu"}/></button>
     <div className={`${styles.tools} ${expanded?styles.open:""}`}>
       <div className={styles.status} title={dock.liveStatus==="online"?"Tiv Songs is online":"Tiv Songs is offline"}><i className={dock.liveStatus==="online"?styles.online:""}/><span>{dock.liveStatus}</span></div>
+      {socials.map(item=><a key={item.platform} href={item.url} target="_blank" rel="noopener noreferrer" data-platform={item.platform} data-tooltip={`Tiv Songs on ${item.platform}`} aria-label={`Open Tiv Songs on ${item.platform}`}><SocialIcon platform={item.platform}/></a>)}
       {dock.searchEnabled&&<button onClick={()=>setSearchOpen(true)} aria-label="Search Tiv Songs" data-tooltip="Search Tiv Songs"><Icon name="search"/></button>}
       <button className={styles.notification} onClick={()=>location.assign("/account")} aria-label={`${notifications} unread notifications`} data-tooltip="Notifications"><Icon name="bell"/>{notifications>0&&<b>{notifications>9?"9+":notifications}</b>}</button>
       {dock.shareEnabled&&<button onClick={share} aria-label="Share Tiv Songs" data-tooltip="Share website"><Icon name="share"/></button>}
