@@ -1,10 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import HeroSlider from "./components/HeroSlider";
-import PrimaryNavLinks from "./components/PrimaryNavLinks";
-import PublicAccountMenu from "./components/PublicAccountMenu";
-import ThemeToggle from "./components/ThemeToggle";
-import {HeaderSearchButton} from "./components/HeaderActions";
+import SiteHeader from "./components/SiteHeader";
 import CommentSection from "./components/CommentSection";
 import SiteFooter from "./components/SiteFooter";
 import {publicApi,slugify} from "./lib/public-api";
@@ -23,7 +20,7 @@ const features=[
   {label:"Videos",description:"Watch culture in motion.",href:"/#videos",image:"/assets/governors/hyacinth-alia.png",imageAlt:"Tiv cultural videos"},
   {label:"Artists",description:"Meet the voices of Tiv music.",href:"/#artists",image:"/heritage/james-ayatse.jpg",imageAlt:"Tiv artists"},
   {label:"Tor Tiv",description:"Explore the royal heritage.",href:"/kings",image:"/heritage/alfred-torkula.jpg",imageAlt:"Tor Tiv royal heritage"},
-  {label:"Governors",description:"Discover Benue leadership.",href:"/governors.html",image:"/assets/governors/samuel-ortom.png",imageAlt:"Benue governors"},
+  {label:"Governors",description:"Discover Benue leadership.",href:"/governors",image:"/assets/governors/samuel-ortom.png",imageAlt:"Benue governors"},
   {label:"Community",description:"Connect with Tiv people worldwide.",href:"/community",image:"/assets/tiv-song-logo.jpeg",imageAlt:"Worldwide Tiv community"}
 ] as const;
 
@@ -34,7 +31,7 @@ export default async function Home(){
   const songs=songData?.items||[],videos=videoData?.items||[],artistItems=artists||[],leaders=torTiv||[],communityItems=community?.items||[];
   const stats=archiveStats?[{label:"Songs archived",value:archiveStats.songs},{label:"Verified artists",value:archiveStats.artists},{label:"Published videos",value:archiveStats.videos},{label:"Tor Tiv records",value:archiveStats.torTiv}].filter(item=>item.value>0):[];
   return <div className={styles.page}>
-    <header className={styles.header}><Link className={styles.brand} href="/"><Image src="/assets/tiv-song-logo.jpeg" alt="Tiv Songs" width={50} height={50} priority/><span>TIV SONGS<small>Where Tiv music lives</small></span></Link><nav className={styles.desktopNav} aria-label="Primary navigation"><PrimaryNavLinks linkClassName={styles.navLink} activeClassName={styles.activeLink}/></nav><div className={styles.headerTools}><ThemeToggle/><HeaderSearchButton className={styles.headerSearch}/><PublicAccountMenu/></div><details className={styles.mobileMenu}><summary aria-label="Open navigation">Menu</summary><nav><PrimaryNavLinks linkClassName={styles.mobileLink} activeClassName={styles.activeLink}/><Link className={styles.mobileLink} href="/account">Account</Link></nav></details></header>
+    <SiteHeader/>
     <main><HeroSlider/>
       <section className={styles.features} aria-labelledby="explore-title"><div className={styles.sectionIntro}><span>EXPLORE TIV SONGS</span><h2 id="explore-title">Music, people and living heritage.</h2></div><div className={styles.featureGrid}>{features.map(feature=><Link className={styles.feature} data-label={feature.label} href={feature.href} key={feature.label}><span className={styles.featureImage}><Image src={feature.image} alt={feature.imageAlt} fill sizes="(max-width: 600px) 42vw, 180px"/></span><strong>{feature.label}</strong><p>{feature.description}</p></Link>)}</div></section>
       {stats.length>0&&<section className={styles.stats} aria-label="Tiv Songs archive statistics">{stats.map(item=><div key={item.label}><strong>{item.value.toLocaleString()}</strong><span>{item.label}</span></div>)}</section>}

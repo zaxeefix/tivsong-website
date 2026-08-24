@@ -10,7 +10,7 @@ const links=[
   {label:"Videos",href:"/#videos",matches:(path:string,hash:string)=>path==="/"&&hash==="#videos"},
   {label:"Artists",href:"/#artists",matches:(path:string,hash:string)=>path==="/"&&hash==="#artists"},
   {label:"Tor Tiv",href:"/kings",matches:(path:string)=>path==="/kings"||path.startsWith("/profiles/kings/")},
-  {label:"Governors",href:"/governors.html",matches:(path:string)=>path==="/governors.html"||path.startsWith("/profiles/governors/")},
+  {label:"Governors",href:"/governors",matches:(path:string)=>path==="/governors"||path.startsWith("/governors/")||path.startsWith("/profiles/governors/")},
   {label:"Community",href:"/community",matches:(path:string)=>path==="/community"},
   {label:"Leaderboard",href:"/leaderboard",matches:(path:string)=>path==="/leaderboard"}
 ] as const;

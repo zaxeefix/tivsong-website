@@ -17,7 +17,7 @@ export default function SiteFooter({variant="general"}:{variant?:keyof typeof me
       </div>
       <nav className={styles.links} aria-label="Footer navigation">
         <div><strong>Explore</strong><Link href="/#songs">Songs</Link><Link href="/#videos">Videos</Link><Link href="/#artists">Artists</Link></div>
-        <div><strong>Culture</strong><Link href="/kings">Tor Tiv</Link><Link href="/governors.html">Governors</Link><Link href="/community">Community</Link></div>
+        <div><strong>Culture</strong><Link href="/kings">Tor Tiv</Link><Link href="/governors">Governors</Link><Link href="/community">Community</Link></div>
         <div><strong>Contribute</strong><Link href="/account">Account</Link><Link href="/account?mode=register">Register</Link><Link href="/community#share">Share activity</Link></div>
         <div><strong>Support</strong><Link href="/#about">About Tiv Songs</Link><Link href="/#privacy">Privacy Policy</Link><Link href="/#terms">Terms of Service</Link><Link href="/#contact">Contact</Link></div>
       </nav>

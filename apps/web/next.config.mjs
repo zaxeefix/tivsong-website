@@ -29,7 +29,7 @@ const nextConfig = {
   distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
   async redirects() {
     return [
-      { source: "/governors", destination: "/governors.html", permanent: false },
+      { source: "/governors.html", destination: "/governors", permanent: true },
       { source: "/tor-tiv.html", destination: "/kings", permanent: true },
     ];
   },
