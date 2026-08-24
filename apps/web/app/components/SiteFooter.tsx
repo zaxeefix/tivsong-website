@@ -7,6 +7,7 @@ import styles from "./SiteFooter.module.css";
 const messages={account:"A private and responsible workspace for preserving Tiv creativity.",community:"Connecting Tiv people, activities and cultural stories worldwide.",heritage:"Preserving Tiv leadership, memory and identity across generations.",general:"The digital home of Tiv music, people, history and cultural heritage."} as const;
 
 export default function SiteFooter({variant="general"}:{variant?:keyof typeof messages}){
+  const year=new Date().getFullYear();
   return <><SocialMediaStrip/><footer className={styles.footer}>
     <div className={styles.inner}>
       <div className={styles.identity}>
@@ -21,6 +22,6 @@ export default function SiteFooter({variant="general"}:{variant?:keyof typeof me
         <div><strong>Support</strong><Link href="/#about">About Tiv Songs</Link><Link href="/#privacy">Privacy Policy</Link><Link href="/#terms">Terms of Service</Link><Link href="/#contact">Contact</Link></div>
       </nav>
     </div>
-    <div className={styles.bottom}><span>© 2026 Tiv Songs. All rights reserved.</span><span>Where real music and culture live.</span></div>
+    <div className={styles.bottom}><div><span>© {year} Tiv Songs. All rights reserved.</span><span className={styles.credit}>Tiv Songs developed by <strong>Zaxee Enterprise.</strong></span></div><span>Where real music and culture live.</span></div>
   </footer></>;
 }
