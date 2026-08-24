@@ -2,7 +2,7 @@ import { Router, type RequestHandler, type Response } from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import multer from "multer";
-import {fileTypeFromFile} from "file-type";
+import {fileTypeFromBuffer,fileTypeFromFile} from "file-type";
 import ffmpegPath from "ffmpeg-static";
 import {spawn} from "node:child_process";
 import {createHash,randomBytes,randomUUID,timingSafeEqual} from "node:crypto";
@@ -16,7 +16,7 @@ import { env } from "../config/env.js";
 import { prisma } from "../database/prisma.js";
 import {openapiDocument,swaggerHtml} from "../docs/openapi.js";
 import {adminLogger,securityLogger} from "../platform/logger.js";
-import {deleteObject,getObject,persistFile} from "../platform/storage.js";
+import {createSignedUpload,deleteObject,getObject,inspectObject,listObjects,objectMediaUrl,persistFile,storageSupportsDirectUpload} from "../platform/storage.js";
 import {isNigeria,validateNigeriaLocation} from "../platform/nigeria-locations.js";
 
 export const api = Router();
@@ -392,6 +392,18 @@ const torTivSchema = z.object({
 api.get("/health", async (_req, res) => {
   await prisma.$queryRaw`SELECT 1`;
   res.json({status: "ok", service: "tiv-songs-api", time: new Date().toISOString()});
+});
+
+const directVideoSessionSchema=z.object({
+  filename:z.string().trim().min(1).max(255),
+  mimeType:z.enum(["video/mp4","video/webm","video/quicktime"]),
+  size:z.number().int().positive().max(maximumUploadBytes)
+});
+
+const directVideoFinalizeSchema=z.object({
+  title:z.string().trim().min(2).max(160),
+  categoryId:z.string().min(1),
+  description:z.string().max(3000).optional()
 });
 api.get("/stats",async(_req,res)=>{
   const [songs,videos,artists,torTiv]=await prisma.$transaction([
@@ -790,6 +802,68 @@ api.post("/account/songs", accountOnly,featureGate("musicUploadEnabled"), async 
   res.status(201).json(jsonSafe({song,message:"Music submitted. It will appear publicly after administrator approval."}));
 });
 
+const requireApprovedContributor=async(userId:string)=>{
+  const user=await prisma.user.findUnique({where:{id:userId},include:{artist:true,roles:{include:{role:true}}}});
+  if(!user)throw Object.assign(new Error("Your contributor profile is unavailable"),{statusCode:404});
+  if(user.status!=="ACTIVE"||user.roles.some(item=>item.role.name==="artist_pending"))throw Object.assign(new Error("Your artist registration is awaiting administrator approval"),{statusCode:403});
+  return user;
+};
+
+api.post("/account/video-uploads",accountOnly,featureGate("videoUploadEnabled"),async(req:AccountRequest,res)=>{
+  if(!storageSupportsDirectUpload())return void res.status(503).json({error:"Direct video upload is unavailable because durable object storage is not configured"});
+  const input=directVideoSessionSchema.parse(req.body);
+  await requireApprovedContributor(req.account!.userId);
+  const extension=input.mimeType==="video/mp4"?"mp4":input.mimeType==="video/webm"?"webm":"mov";
+  const uploadId=randomUUID();
+  const safeName=path.basename(input.filename,path.extname(input.filename)).toLowerCase().replace(/[^a-z0-9_-]+/g,"-").replace(/^-+|-+$/g,"").slice(0,80)||"video";
+  const storageKey=`videos/${req.account!.userId}/${uploadId}/${safeName}.${extension}`;
+  const upload=await prisma.upload.create({data:{id:uploadId,userId:req.account!.userId,kind:"video",provider:"s3",storageKey,entityType:"video_session",mimeType:input.mimeType,sizeBytes:BigInt(input.size),status:"PROCESSING"}});
+  try{
+    const uploadUrl=await createSignedUpload(storageKey,input.mimeType,input.size);
+    res.status(201).json(jsonSafe({uploadId:upload.id,uploadUrl,expiresInSeconds:900,headers:{"Content-Type":input.mimeType},status:"preparing"}));
+  }catch(error){
+    await prisma.upload.update({where:{id:upload.id},data:{status:"DRAFT"}}).catch(()=>undefined);
+    throw error;
+  }
+});
+
+api.post("/account/video-uploads/:id/finalize",accountOnly,async(req:AccountRequest,res)=>{
+  const id=z.string().uuid().parse(req.params.id),input=directVideoFinalizeSchema.parse(req.body);
+  const upload=await prisma.upload.findFirst({where:{id,userId:req.account!.userId,kind:"video"}});
+  if(!upload)return void res.status(404).json({error:"Upload session not found"});
+  if(upload.entityType==="video"&&upload.entityId){
+    const existing=await prisma.video.findUnique({where:{id:upload.entityId}});
+    return void res.json(jsonSafe({item:existing,status:"completed",message:"Video uploaded successfully and submitted for administrator review."}));
+  }
+  const user=await requireApprovedContributor(req.account!.userId);
+  await prisma.category.findUniqueOrThrow({where:{id:input.categoryId}});
+  const object=await inspectObject(upload.storageKey);
+  if(object.size!==Number(upload.sizeBytes))throw Object.assign(new Error("Storage confirmation failed because the uploaded file size does not match"),{statusCode:409});
+  if(object.mimeType!==upload.mimeType)throw Object.assign(new Error("Storage confirmation failed because the uploaded media type does not match"),{statusCode:422});
+  const sample=await getObject(upload.storageKey,"bytes=0-8191");
+  const bytes=sample.Body?Buffer.from(await sample.Body.transformToByteArray()):Buffer.alloc(0);
+  const detected=await fileTypeFromBuffer(bytes);
+  const allowed=new Set(["video/mp4","video/webm","video/quicktime"]);
+  if(!detected||!allowed.has(detected.mime))throw Object.assign(new Error("The uploaded object is not a supported MP4, WebM or MOV video"),{statusCode:422});
+  const base=input.title.toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"video";
+  let slug=base,suffix=1;while(await prisma.video.findUnique({where:{slug}}))slug=`${base}-${++suffix}`;
+  const video=await prisma.$transaction(async transaction=>{
+    const claimed=await transaction.upload.updateMany({where:{id:upload.id,userId:user.id,entityType:"video_session",status:"PROCESSING"},data:{status:"DRAFT"}});
+    if(!claimed.count)throw Object.assign(new Error("This upload is already being finalised. Refresh your submissions before retrying."),{statusCode:409});
+    const created=await transaction.video.create({data:{artistId:user.artist?.id||null,contributorId:user.id,categoryId:input.categoryId,title:input.title,slug,description:input.description||null,videoUrl:objectMediaUrl(upload.storageKey),status:"PENDING_REVIEW"}});
+    await transaction.upload.update({where:{id:upload.id},data:{entityType:"video",entityId:created.id,status:"PENDING_REVIEW",mimeType:detected.mime,sizeBytes:BigInt(object.size)}});
+    return created;
+  });
+  res.status(201).json(jsonSafe({item:video,status:"completed",message:"Video uploaded successfully and submitted for administrator review."}));
+});
+
+api.post("/account/video-uploads/:id/cancel",accountOnly,async(req:AccountRequest,res)=>{
+  const id=z.string().uuid().parse(req.params.id);
+  const result=await prisma.upload.updateMany({where:{id,userId:req.account!.userId,kind:"video",entityType:"video_session"},data:{status:"DRAFT"}});
+  if(!result.count)return void res.status(404).json({error:"Active upload session not found"});
+  res.json({status:"cancelled",message:"Upload cancelled. The stored object, if any, was preserved for administrator reconciliation."});
+});
+
 api.post("/account/media", accountOnly,mediaUpload.single("file"), async (req:AccountRequest, res) => {
   if(!req.file)return void res.status(422).json({error:"Choose an audio or video file"});
   try{
@@ -998,6 +1072,21 @@ api.get("/admin/songs", adminOnly, async (_req, res) => {
 api.get("/admin/videos", adminOnly, async (_req,res)=>{
   const videos=await prisma.video.findMany({include:{artist:true,contributor:{select:{displayName:true}},category:true},orderBy:{createdAt:"desc"},take:200});
   res.json(jsonSafe(videos.map(video=>({...video,artist:video.artist||{stageName:video.contributor?.displayName||"Contributor"},videoUrl:signedMediaUrl(video.videoUrl,"admin")}))));
+});
+
+api.get("/admin/upload-reconciliation",adminOnly,async(_req,res)=>{
+  const [uploads,storageListing]=await Promise.all([
+    prisma.upload.findMany({where:{kind:"video"},orderBy:{createdAt:"desc"},take:500,select:{id:true,userId:true,storageKey:true,entityType:true,entityId:true,status:true,sizeBytes:true,createdAt:true}}),
+    listObjects("videos/")
+  ]);
+  const {objects,truncated}=storageListing;
+  const objectMap=new Map(objects.map(item=>[item.key,item])),uploadKeys=new Set(uploads.map(item=>item.storageKey));
+  const now=Date.now(),staleAfter=24*60*60_000;
+  const missingStorage=uploads.filter(item=>!objectMap.has(item.storageKey)&&item.entityType==="video");
+  const staleSessions=uploads.filter(item=>item.entityType==="video_session"&&now-item.createdAt.getTime()>staleAfter);
+  const recoverable=uploads.filter(item=>item.entityType==="video_session"&&objectMap.has(item.storageKey));
+  const orphanedStorage=objects.filter(item=>!uploadKeys.has(item.key));
+  res.json(jsonSafe({generatedAt:new Date(),storageListingTruncated:truncated,recoverable:recoverable.map(item=>({...item,recommendedAction:"Verify ownership and metadata, then retry finalisation"})),missingStorage:missingStorage.map(item=>({...item,recommendedAction:"Keep unpublished and investigate storage history"})),orphanedStorage:orphanedStorage.map(item=>({...item,recommendedAction:"Administrator review; do not delete automatically"})),staleSessions:staleSessions.map(item=>({...item,recommendedAction:objectMap.has(item.storageKey)?"Offer finalisation retry":"Mark for administrator review"})),failedProcessing:uploads.filter(item=>item.status==="REJECTED"&&item.entityType==="video_session")}));
 });
 api.post("/admin/categories",adminOnly,async(req:AdminRequest,res)=>{const input=z.object({name:z.string().min(2).max(100),slug:z.string().min(2).max(100).regex(/^[a-z0-9-]+$/)}).parse(req.body);const item=await prisma.category.create({data:input});await recordAudit(req,"CREATE","category",item.id,`Created category: ${item.name}`);res.status(201).json(item)});
 api.patch("/admin/categories/:id",adminOnly,async(req:AdminRequest,res)=>{const id=z.string().parse(req.params.id);const input=z.object({name:z.string().min(2).max(100),slug:z.string().min(2).max(100).regex(/^[a-z0-9-]+$/)}).parse(req.body);const item=await prisma.category.update({where:{id},data:input});await recordAudit(req,"UPDATE","category",id,`Updated category: ${item.name}`);res.json(item)});

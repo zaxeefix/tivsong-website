@@ -19,12 +19,12 @@ type List<T>={items:T[];pagination?:{total:number}};
 type Stats={songs:number;videos:number;artists:number;torTiv:number};
 
 const features=[
-  {label:"Music",description:"Stream authentic Tiv songs.",href:"/#songs",image:"/assets/tiv-song-logo.jpeg"},
-  {label:"Videos",description:"Watch culture in motion.",href:"/#videos",image:"/assets/governors/hyacinth-alia.png"},
-  {label:"Artists",description:"Meet the voices of Tiv music.",href:"/#artists",image:"/heritage/james-ayatse.jpg"},
-  {label:"Tor Tiv",description:"Explore the royal heritage.",href:"/kings",image:"/heritage/alfred-torkula.jpg"},
-  {label:"Governors",description:"Discover Benue leadership.",href:"/governors.html",image:"/assets/governors/samuel-ortom.png"},
-  {label:"Community",description:"Connect with Tiv people worldwide.",href:"/community",image:"/assets/tiv-song-logo.jpeg"}
+  {label:"Music",description:"Stream authentic Tiv songs.",href:"/#songs",image:"/assets/tiv-song-logo.jpeg",imageAlt:"Tiv music collection"},
+  {label:"Videos",description:"Watch culture in motion.",href:"/#videos",image:"/assets/governors/hyacinth-alia.png",imageAlt:"Tiv cultural videos"},
+  {label:"Artists",description:"Meet the voices of Tiv music.",href:"/#artists",image:"/heritage/james-ayatse.jpg",imageAlt:"Tiv artists"},
+  {label:"Tor Tiv",description:"Explore the royal heritage.",href:"/kings",image:"/heritage/alfred-torkula.jpg",imageAlt:"Tor Tiv royal heritage"},
+  {label:"Governors",description:"Discover Benue leadership.",href:"/governors.html",image:"/assets/governors/samuel-ortom.png",imageAlt:"Benue governors"},
+  {label:"Community",description:"Connect with Tiv people worldwide.",href:"/community",image:"/assets/tiv-song-logo.jpeg",imageAlt:"Worldwide Tiv community"}
 ] as const;
 
 export default async function Home(){
@@ -36,7 +36,7 @@ export default async function Home(){
   return <div className={styles.page}>
     <header className={styles.header}><Link className={styles.brand} href="/"><Image src="/assets/tiv-song-logo.jpeg" alt="Tiv Songs" width={50} height={50} priority/><span>TIV SONGS<small>Where Tiv music lives</small></span></Link><nav className={styles.desktopNav} aria-label="Primary navigation"><PrimaryNavLinks linkClassName={styles.navLink} activeClassName={styles.activeLink}/></nav><div className={styles.headerTools}><ThemeToggle/><HeaderSearchButton className={styles.headerSearch}/><PublicAccountMenu/></div><details className={styles.mobileMenu}><summary aria-label="Open navigation">Menu</summary><nav><PrimaryNavLinks linkClassName={styles.mobileLink} activeClassName={styles.activeLink}/><Link className={styles.mobileLink} href="/account">Account</Link></nav></details></header>
     <main><HeroSlider/>
-      <section className={styles.features} aria-labelledby="explore-title"><div className={styles.sectionIntro}><span>EXPLORE TIV SONGS</span><h2 id="explore-title">Music, people and living heritage.</h2></div><div className={styles.featureGrid}>{features.map(feature=><Link className={styles.feature} data-label={feature.label} href={feature.href} key={feature.label}><span className={styles.featureImage}><Image src={feature.image} alt="" fill sizes="(max-width: 600px) 42vw, 180px"/></span><strong>{feature.label}</strong><p>{feature.description}</p></Link>)}</div></section>
+      <section className={styles.features} aria-labelledby="explore-title"><div className={styles.sectionIntro}><span>EXPLORE TIV SONGS</span><h2 id="explore-title">Music, people and living heritage.</h2></div><div className={styles.featureGrid}>{features.map(feature=><Link className={styles.feature} data-label={feature.label} href={feature.href} key={feature.label}><span className={styles.featureImage}><Image src={feature.image} alt={feature.imageAlt} fill sizes="(max-width: 600px) 42vw, 180px"/></span><strong>{feature.label}</strong><p>{feature.description}</p></Link>)}</div></section>
       {stats.length>0&&<section className={styles.stats} aria-label="Tiv Songs archive statistics">{stats.map(item=><div key={item.label}><strong>{item.value.toLocaleString()}</strong><span>{item.label}</span></div>)}</section>}
       <section className={styles.promise} aria-labelledby="preserve-title"><h2 id="preserve-title">Upload. Review. Preserve.</h2><p>Contribute original Tiv music through the existing review and approval process.</p></section>
       <ContentSection id="songs" eyebrow="LATEST RELEASES" title="The sound of Tiv today." link="/#songs" linkText="Explore songs">{songs.length?songs.map(song=><Link className={styles.mediaCard} href={`/song/${song.slug}`} key={song.id}><Artwork src={song.coverImageUrl} title={song.title}/><span><small>{song.artist?.stageName||"Tiv Songs artist"}</small><strong>{song.title}</strong></span></Link>):<EmptyState label="No published songs yet."/>}</ContentSection>
