@@ -4,6 +4,7 @@ import HeroSlider from "./components/HeroSlider";
 import PrimaryNavLinks from "./components/PrimaryNavLinks";
 import PublicAccountMenu from "./components/PublicAccountMenu";
 import ThemeToggle from "./components/ThemeToggle";
+import {HeaderSearchButton} from "./components/HeaderActions";
 import CommentSection from "./components/CommentSection";
 import SiteFooter from "./components/SiteFooter";
 import {publicApi,slugify} from "./lib/public-api";
@@ -15,6 +16,7 @@ type Video={id:string;slug:string;title:string;thumbnailUrl?:string|null;artist?
 type TorTiv={id:string;slug?:string;name:string;portraitUrl?:string|null;ordinal:number};
 type Community={id:string;slug:string;title:string;imageUrl?:string|null};
 type List<T>={items:T[];pagination?:{total:number}};
+type Stats={songs:number;videos:number;artists:number;torTiv:number};
 
 const features=[
   {label:"Music",description:"Stream authentic Tiv songs.",href:"/#songs",image:"/assets/tiv-song-logo.jpeg"},
@@ -26,13 +28,13 @@ const features=[
 ] as const;
 
 export default async function Home(){
-  const [songData,videoData,artists,torTiv,community]=await Promise.all([
-    publicApi<List<Song>>("/songs?limit=6"),publicApi<List<Video>>("/videos?limit=6"),publicApi<Artist[]>("/artists"),publicApi<TorTiv[]>("/tor-tiv"),publicApi<List<Community>>("/community?limit=3")
+  const [songData,videoData,artists,torTiv,community,archiveStats]=await Promise.all([
+    publicApi<List<Song>>("/songs?limit=6"),publicApi<List<Video>>("/videos?limit=6"),publicApi<Artist[]>("/artists"),publicApi<TorTiv[]>("/tor-tiv"),publicApi<List<Community>>("/community?limit=3"),publicApi<Stats>("/stats")
   ]);
   const songs=songData?.items||[],videos=videoData?.items||[],artistItems=artists||[],leaders=torTiv||[],communityItems=community?.items||[];
-  const stats=[{label:"Songs archived",value:songData?.pagination?.total??songs.length},{label:"Verified artists",value:artistItems.length},{label:"Featured videos",value:videos.length},{label:"Tor Tiv records",value:leaders.length}].filter(item=>item.value>0);
+  const stats=archiveStats?[{label:"Songs archived",value:archiveStats.songs},{label:"Verified artists",value:archiveStats.artists},{label:"Published videos",value:archiveStats.videos},{label:"Tor Tiv records",value:archiveStats.torTiv}].filter(item=>item.value>0):[];
   return <div className={styles.page}>
-    <header className={styles.header}><Link className={styles.brand} href="/"><Image src="/assets/tiv-song-logo.jpeg" alt="Tiv Songs" width={50} height={50} priority/><span>TIV SONGS<small>Where Tiv music lives</small></span></Link><nav className={styles.desktopNav} aria-label="Primary navigation"><PrimaryNavLinks linkClassName={styles.navLink} activeClassName={styles.activeLink}/></nav><div className={styles.headerTools}><ThemeToggle/><PublicAccountMenu/><Link className={styles.signIn} href="/account">Sign in</Link></div><details className={styles.mobileMenu}><summary aria-label="Open navigation">Menu</summary><nav><PrimaryNavLinks linkClassName={styles.mobileLink} activeClassName={styles.activeLink}/><Link className={styles.mobileLink} href="/account">Sign in</Link></nav></details></header>
+    <header className={styles.header}><Link className={styles.brand} href="/"><Image src="/assets/tiv-song-logo.jpeg" alt="Tiv Songs" width={50} height={50} priority/><span>TIV SONGS<small>Where Tiv music lives</small></span></Link><nav className={styles.desktopNav} aria-label="Primary navigation"><PrimaryNavLinks linkClassName={styles.navLink} activeClassName={styles.activeLink}/></nav><div className={styles.headerTools}><ThemeToggle/><HeaderSearchButton className={styles.headerSearch}/><PublicAccountMenu/></div><details className={styles.mobileMenu}><summary aria-label="Open navigation">Menu</summary><nav><PrimaryNavLinks linkClassName={styles.mobileLink} activeClassName={styles.activeLink}/><Link className={styles.mobileLink} href="/account">Account</Link></nav></details></header>
     <main><HeroSlider/>
       <section className={styles.features} aria-labelledby="explore-title"><div className={styles.sectionIntro}><span>EXPLORE TIV SONGS</span><h2 id="explore-title">Music, people and living heritage.</h2></div><div className={styles.featureGrid}>{features.map(feature=><Link className={styles.feature} data-label={feature.label} href={feature.href} key={feature.label}><span className={styles.featureImage}><Image src={feature.image} alt="" fill sizes="(max-width: 600px) 42vw, 180px"/></span><strong>{feature.label}</strong><p>{feature.description}</p></Link>)}</div></section>
       {stats.length>0&&<section className={styles.stats} aria-label="Tiv Songs archive statistics">{stats.map(item=><div key={item.label}><strong>{item.value.toLocaleString()}</strong><span>{item.label}</span></div>)}</section>}

@@ -393,6 +393,16 @@ api.get("/health", async (_req, res) => {
   await prisma.$queryRaw`SELECT 1`;
   res.json({status: "ok", service: "tiv-songs-api", time: new Date().toISOString()});
 });
+api.get("/stats",async(_req,res)=>{
+  const [songs,videos,artists,torTiv]=await prisma.$transaction([
+    prisma.song.count({where:{status:"PUBLISHED"}}),
+    prisma.video.count({where:{status:"PUBLISHED"}}),
+    prisma.artist.count({where:{verifiedAt:{not:null},user:{status:"ACTIVE"}}}),
+    prisma.torTiv.count()
+  ]);
+  res.setHeader("Cache-Control","public, max-age=60, stale-while-revalidate=300");
+  res.json({songs,videos,artists,torTiv});
+});
 api.get("/openapi.json",(_req,res)=>{res.setHeader("Cache-Control","public, max-age=300");res.json(openapiDocument)});
 api.get("/docs",(_req,res)=>{res.setHeader("Content-Security-Policy","default-src 'self'; style-src 'self' 'unsafe-inline' https://unpkg.com; script-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self'");res.type("html").send(swaggerHtml)});
 
