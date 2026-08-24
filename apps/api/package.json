@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1106.0",
+    "@aws-sdk/s3-request-presigner": "^3.1116.0",
     "@prisma/client": "^6.13.0",
     "@some19ice/nigeria-geo-core": "^0.1.4",
     "@types/multer": "^2.2.0",

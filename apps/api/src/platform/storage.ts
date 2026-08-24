@@ -1,7 +1,8 @@
 import {createReadStream} from "node:fs";
 import {rm,stat} from "node:fs/promises";
 import path from "node:path";
-import {DeleteObjectCommand,GetObjectCommand,PutObjectCommand,S3Client} from "@aws-sdk/client-s3";
+import {DeleteObjectCommand,GetObjectCommand,HeadObjectCommand,ListObjectsV2Command,PutObjectCommand,S3Client} from "@aws-sdk/client-s3";
+import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
 import {env} from "../config/env.js";
 
 const client=env.STORAGE_PROVIDER==="s3"?new S3Client({endpoint:env.S3_ENDPOINT,region:env.S3_REGION,forcePathStyle:true,credentials:{accessKeyId:env.S3_ACCESS_KEY_ID!,secretAccessKey:env.S3_SECRET_ACCESS_KEY!}}):null;
@@ -19,6 +20,26 @@ export async function persistFile(filePath:string,folder:string,mimeType:string,
 export async function getObject(key:string,range?:string){
   if(!client)throw new Error("Object storage is not configured");
   return client.send(new GetObjectCommand({Bucket:env.S3_BUCKET!,Key:key,Range:range}));
+}
+
+export function storageSupportsDirectUpload(){return Boolean(client);}
+
+export async function createSignedUpload(key:string,mimeType:string,size:number){
+  if(!client)throw Object.assign(new Error("Direct uploads require S3-compatible storage"),{statusCode:503});
+  const command=new PutObjectCommand({Bucket:env.S3_BUCKET!,Key:key,ContentType:mimeType,ContentLength:size,CacheControl:"private, max-age=0"});
+  return getSignedUrl(client,command,{expiresIn:15*60});
+}
+
+export async function inspectObject(key:string){
+  if(!client)throw Object.assign(new Error("Object storage is not configured"),{statusCode:503});
+  const object=await client.send(new HeadObjectCommand({Bucket:env.S3_BUCKET!,Key:key}));
+  return {size:Number(object.ContentLength||0),mimeType:object.ContentType||"application/octet-stream",metadata:object.Metadata||{}};
+}
+
+export async function listObjects(prefix="videos/"){
+  if(!client)return {objects:[],truncated:false};
+  const result=await client.send(new ListObjectsV2Command({Bucket:env.S3_BUCKET!,Prefix:prefix,MaxKeys:1000}));
+  return {objects:(result.Contents||[]).flatMap(item=>item.Key?[{key:item.Key,size:Number(item.Size||0),updatedAt:item.LastModified||null}]:[]),truncated:Boolean(result.IsTruncated)};
 }
 
 export async function deleteObject(key:string){if(client)await client.send(new DeleteObjectCommand({Bucket:env.S3_BUCKET!,Key:key}));}

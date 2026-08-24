@@ -1,6 +1,7 @@
 const apiBase = (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api")
   .replace(/\/$/, "");
 const isDevelopment=process.env.NODE_ENV==="development";
+const storageOrigin=(()=>{try{return process.env.S3_ENDPOINT?new URL(process.env.S3_ENDPOINT).origin:""}catch{return ""}})();
 const contentSecurityPolicy=[
   "default-src 'self'",
   "base-uri 'self'",
@@ -13,7 +14,7 @@ const contentSecurityPolicy=[
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' https: data: blob:",
   "media-src 'self' https: blob:",
-  "connect-src 'self'",
+  `connect-src 'self'${storageOrigin?` ${storageOrigin}`:""}`,
   "font-src 'self' data:",
   ...(!isDevelopment?["upgrade-insecure-requests"]:[])
 ].join("; ");
