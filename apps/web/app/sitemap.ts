@@ -14,7 +14,7 @@ export default async function sitemap():Promise<MetadataRoute.Sitemap>{
     {url:base,changeFrequency:"daily",priority:1},
     {url:`${base}/community`,changeFrequency:"daily",priority:.9},
     {url:`${base}/kings`,changeFrequency:"monthly",priority:.8},
-    {url:`${base}/governors.html`,changeFrequency:"monthly",priority:.7},
+    {url:`${base}/governors`,changeFrequency:"monthly",priority:.7},
     {url:`${base}/account`,changeFrequency:"monthly",priority:.5},
     ...(songs?.items||[]).map(item=>({url:`${base}/song/${item.slug}`,lastModified:new Date(item.updatedAt),changeFrequency:"weekly" as const,priority:.8})),
     ...(videos?.items||[]).map(item=>({url:`${base}/video/${item.slug}`,lastModified:new Date(item.updatedAt),changeFrequency:"weekly" as const,priority:.75})),

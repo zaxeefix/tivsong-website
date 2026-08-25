@@ -16,7 +16,7 @@ import { env } from "../config/env.js";
 import { prisma } from "../database/prisma.js";
 import {openapiDocument,swaggerHtml} from "../docs/openapi.js";
 import {adminLogger,securityLogger} from "../platform/logger.js";
-import {createSignedUpload,deleteObject,getObject,inspectObject,listObjects,objectMediaUrl,persistFile,storageSupportsDirectUpload} from "../platform/storage.js";
+import {abortMultipartUpload,completeMultipartUpload,createMultipartUpload,createSignedUploadPart,deleteObject,getObject,inspectObject,listMultipartParts,listObjects,objectMediaUrl,persistFile,storageSupportsDirectUpload} from "../platform/storage.js";
 import {isNigeria,validateNigeriaLocation} from "../platform/nigeria-locations.js";
 
 export const api = Router();
@@ -403,7 +403,8 @@ const directVideoSessionSchema=z.object({
 const directVideoFinalizeSchema=z.object({
   title:z.string().trim().min(2).max(160),
   categoryId:z.string().min(1),
-  description:z.string().max(3000).optional()
+  description:z.string().max(3000).optional(),
+  parts:z.array(z.object({partNumber:z.number().int().min(1).max(10000),etag:z.string().min(1).max(300)})).min(1).max(10000)
 });
 api.get("/stats",async(_req,res)=>{
   const [songs,videos,artists,torTiv]=await prisma.$transaction([
@@ -817,14 +818,31 @@ api.post("/account/video-uploads",accountOnly,featureGate("videoUploadEnabled"),
   const uploadId=randomUUID();
   const safeName=path.basename(input.filename,path.extname(input.filename)).toLowerCase().replace(/[^a-z0-9_-]+/g,"-").replace(/^-+|-+$/g,"").slice(0,80)||"video";
   const storageKey=`videos/${req.account!.userId}/${uploadId}/${safeName}.${extension}`;
-  const upload=await prisma.upload.create({data:{id:uploadId,userId:req.account!.userId,kind:"video",provider:"s3",storageKey,entityType:"video_session",mimeType:input.mimeType,sizeBytes:BigInt(input.size),status:"PROCESSING"}});
+  const multipartId=await createMultipartUpload(storageKey,input.mimeType);
+  const upload=await prisma.upload.create({data:{id:uploadId,userId:req.account!.userId,kind:"video",provider:"s3",storageKey,entityType:"video_session",mimeType:input.mimeType,sizeBytes:BigInt(input.size),checksum:`multipart:${multipartId}`,status:"PROCESSING"}});
   try{
-    const uploadUrl=await createSignedUpload(storageKey,input.mimeType,input.size);
-    res.status(201).json(jsonSafe({uploadId:upload.id,uploadUrl,expiresInSeconds:900,headers:{"Content-Type":input.mimeType},status:"preparing"}));
+    res.status(201).json(jsonSafe({uploadId:upload.id,partSize:10*1024*1024,expiresInSeconds:900,status:"preparing"}));
   }catch(error){
     await prisma.upload.update({where:{id:upload.id},data:{status:"DRAFT"}}).catch(()=>undefined);
     throw error;
   }
+});
+
+const activeMultipartId=(checksum:string|null)=>checksum?.startsWith("multipart:")?checksum.slice(10):null;
+
+api.get("/account/video-uploads/:id/parts",accountOnly,async(req:AccountRequest,res)=>{
+  const id=z.string().uuid().parse(req.params.id),upload=await prisma.upload.findFirst({where:{id,userId:req.account!.userId,kind:"video",entityType:"video_session",status:"PROCESSING"}});
+  if(!upload)return void res.status(404).json({error:"Active upload session not found"});
+  const multipartId=activeMultipartId(upload.checksum);if(!multipartId)return void res.status(409).json({error:"Upload session is no longer accepting parts"});
+  res.json({parts:await listMultipartParts(upload.storageKey,multipartId)});
+});
+
+api.post("/account/video-uploads/:id/parts",accountOnly,async(req:AccountRequest,res)=>{
+  const id=z.string().uuid().parse(req.params.id),partNumber=z.object({partNumber:z.number().int().min(1).max(10000)}).parse(req.body).partNumber;
+  const upload=await prisma.upload.findFirst({where:{id,userId:req.account!.userId,kind:"video",entityType:"video_session",status:"PROCESSING"}});
+  if(!upload)return void res.status(404).json({error:"Active upload session not found"});
+  const multipartId=activeMultipartId(upload.checksum);if(!multipartId)return void res.status(409).json({error:"Upload session is no longer accepting parts"});
+  res.json({uploadUrl:await createSignedUploadPart(upload.storageKey,multipartId,partNumber),expiresInSeconds:900});
 });
 
 api.post("/account/video-uploads/:id/finalize",accountOnly,async(req:AccountRequest,res)=>{
@@ -837,6 +855,13 @@ api.post("/account/video-uploads/:id/finalize",accountOnly,async(req:AccountRequ
   }
   const user=await requireApprovedContributor(req.account!.userId);
   await prisma.category.findUniqueOrThrow({where:{id:input.categoryId}});
+  const multipartId=activeMultipartId(upload.checksum);
+  if(multipartId){
+    const stored=await listMultipartParts(upload.storageKey,multipartId);
+    if(stored.length!==input.parts.length)throw Object.assign(new Error("Some video parts have not reached storage yet"),{statusCode:409});
+    await completeMultipartUpload(upload.storageKey,multipartId,input.parts);
+    await prisma.upload.update({where:{id:upload.id},data:{checksum:null}});
+  }
   const object=await inspectObject(upload.storageKey);
   if(object.size!==Number(upload.sizeBytes))throw Object.assign(new Error("Storage confirmation failed because the uploaded file size does not match"),{statusCode:409});
   if(object.mimeType!==upload.mimeType)throw Object.assign(new Error("Storage confirmation failed because the uploaded media type does not match"),{statusCode:422});
@@ -859,9 +884,11 @@ api.post("/account/video-uploads/:id/finalize",accountOnly,async(req:AccountRequ
 
 api.post("/account/video-uploads/:id/cancel",accountOnly,async(req:AccountRequest,res)=>{
   const id=z.string().uuid().parse(req.params.id);
+  const upload=await prisma.upload.findFirst({where:{id,userId:req.account!.userId,kind:"video",entityType:"video_session",status:"PROCESSING"}});
+  const multipartId=activeMultipartId(upload?.checksum||null);if(upload&&multipartId)await abortMultipartUpload(upload.storageKey,multipartId).catch(()=>undefined);
   const result=await prisma.upload.updateMany({where:{id,userId:req.account!.userId,kind:"video",entityType:"video_session"},data:{status:"DRAFT"}});
   if(!result.count)return void res.status(404).json({error:"Active upload session not found"});
-  res.json({status:"cancelled",message:"Upload cancelled. The stored object, if any, was preserved for administrator reconciliation."});
+  res.json({status:"cancelled",message:"Upload cancelled and incomplete storage parts were safely released."});
 });
 
 api.post("/account/media", accountOnly,mediaUpload.single("file"), async (req:AccountRequest, res) => {

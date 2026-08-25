@@ -3,11 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import {FormEvent,useCallback,useEffect,useMemo,useState} from "react";
-import ThemeToggle from "../components/ThemeToggle";
-import PublicAccountMenu from "../components/PublicAccountMenu";
+import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import CommentSection from "../components/CommentSection";
-import PrimaryNavLinks from "../components/PrimaryNavLinks";
 import styles from "./community.module.css";
 
 type CommunityPost={id:string;title:string;description:string;country:string;region:string|null;city:string|null;eventDate:string;isUpcoming:boolean;mediaType:string;mediaUrl:string;user:{displayName:string}};
@@ -66,7 +64,7 @@ export default function CommunityPage(){
   };
 
   return <main className={styles.page}>
-    <nav className={styles.nav} aria-label="Primary navigation"><Link className={styles.brand} href="/"><Image src="/assets/tiv-song-logo.jpeg" alt="Tiv Songs" width={48} height={48}/><span>TIV SONGS</span></Link><div className={styles.links}><PrimaryNavLinks activeClassName={styles.active}/></div><div className={styles.navControls}><ThemeToggle className={styles.theme}/><PublicAccountMenu/></div></nav>
+    <SiteHeader/>
     <header className={styles.hero}><div><span>TIV PEOPLE · WORLDWIDE</span><h1>Our activities.<br/><em>Everywhere.</em></h1><p>Discover Tiv cultural gatherings, celebrations, meetings and upcoming events from Taraba to the USA, Canada, South Africa and every community in between.</p><a href="#share" className={styles.primary}>Share an activity</a></div><aside><strong>{items.length}</strong><span>approved community stories</span></aside></header>
     <section className={styles.content}>
       <div className={styles.sectionHead}><div><span>WORLDWIDE FEED</span><h2>Latest activities and upcoming events</h2></div></div>

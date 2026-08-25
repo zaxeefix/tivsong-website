@@ -3,11 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import {useEffect, useState} from "react";
-import ThemeToggle from "../components/ThemeToggle";
-import PublicAccountMenu from "../components/PublicAccountMenu";
+import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
 import CommentSection from "../components/CommentSection";
-import PrimaryNavLinks from "../components/PrimaryNavLinks";
 import {heritageProfiles} from "../data/heritageProfiles";
 import styles from "./kings.module.css";
 
@@ -38,10 +36,7 @@ export default function KingsPage(){
     return ()=>controller.abort();
   },[]);
   return <main className={styles.page}>
-    <nav className={styles.nav}>
-      <Link className={styles.brand} href="/"><Image src="/assets/tiv-song-logo.jpeg" alt="" width={48} height={48}/>TIV SONGS</Link>
-      <div className={styles.links}><PrimaryNavLinks linkClassName={styles.link} activeClassName={styles.active}/><ThemeToggle className={styles.themeToggle}/><PublicAccountMenu/></div>
-    </nav>
+    <SiteHeader/>
     <header className={styles.hero}><div className={styles.heroInner}><div><span className={styles.eyebrow}>Tiv Royal Heritage · Since 1946</span><h1>The throne.<br/><span>The story.</span><br/>The people.</h1><p className={styles.lead}>Meet the Tor Tiv—custodians of identity, unity and cultural memory across generations of the Tiv nation.</p></div><aside className={styles.heroNote}><strong>{kings.length}</strong><span>paramount rulers chronicled in a living digital archive, from Makir Zakpe to the present day.</span></aside></div></header>
     <section className={styles.main}><div className={styles.intro}><div><small>THE TOR TIV DYNASTY</small><h2>Leadership across generations.</h2></div><p>The office of the Tor Tiv is more than a throne. It is a shared cultural institution that carries the history, aspirations and collective voice of Tiv people. This timeline presents each reign with dignity, clarity and room for the archive to grow.</p></div>
       <div className={styles.timeline}>{kings.map(king=>{const profile=profileFor(king);return <article className={styles.card} key={`${king.ordinal}-${king.name}`}><div className={styles.portrait}><span className={styles.ordinal}>TOR TIV {String(king.ordinal).padStart(2,"0")}</span>{king.portraitUrl?<Image src={king.portraitUrl} alt={`Portrait of ${king.name}`} fill sizes="(max-width:620px) 100vw, 280px"/>:<div className={styles.initials}>{king.name.split(" ").map(part=>part[0]).join("").slice(0,3)}</div>}</div><div className={styles.content}><span className={styles.reign}>{year(king.reignStart)} — {year(king.reignEnd)}</span><h3>{king.name}</h3><p>{king.biography}</p>{profile&&<Link className={styles.profileLink} href={`/profiles/kings/${profile.slug}`}>View profile &amp; achievements →</Link>}</div></article>})}</div>

@@ -1,7 +1,7 @@
 import {createReadStream} from "node:fs";
 import {rm,stat} from "node:fs/promises";
 import path from "node:path";
-import {DeleteObjectCommand,GetObjectCommand,HeadObjectCommand,ListObjectsV2Command,PutObjectCommand,S3Client} from "@aws-sdk/client-s3";
+import {AbortMultipartUploadCommand,CompleteMultipartUploadCommand,CreateMultipartUploadCommand,DeleteObjectCommand,GetObjectCommand,HeadObjectCommand,ListObjectsV2Command,ListPartsCommand,PutObjectCommand,S3Client,UploadPartCommand} from "@aws-sdk/client-s3";
 import {getSignedUrl} from "@aws-sdk/s3-request-presigner";
 import {env} from "../config/env.js";
 
@@ -28,6 +28,33 @@ export async function createSignedUpload(key:string,mimeType:string,size:number)
   if(!client)throw Object.assign(new Error("Direct uploads require S3-compatible storage"),{statusCode:503});
   const command=new PutObjectCommand({Bucket:env.S3_BUCKET!,Key:key,ContentType:mimeType,ContentLength:size,CacheControl:"private, max-age=0"});
   return getSignedUrl(client,command,{expiresIn:15*60});
+}
+
+export async function createMultipartUpload(key:string,mimeType:string){
+  if(!client)throw Object.assign(new Error("Multipart uploads require S3-compatible storage"),{statusCode:503});
+  const result=await client.send(new CreateMultipartUploadCommand({Bucket:env.S3_BUCKET!,Key:key,ContentType:mimeType,CacheControl:"private, max-age=0"}));
+  if(!result.UploadId)throw new Error("Object storage did not create an upload session");
+  return result.UploadId;
+}
+
+export async function createSignedUploadPart(key:string,uploadId:string,partNumber:number){
+  if(!client)throw Object.assign(new Error("Multipart uploads require S3-compatible storage"),{statusCode:503});
+  return getSignedUrl(client,new UploadPartCommand({Bucket:env.S3_BUCKET!,Key:key,UploadId:uploadId,PartNumber:partNumber}),{expiresIn:15*60});
+}
+
+export async function listMultipartParts(key:string,uploadId:string){
+  if(!client)throw Object.assign(new Error("Multipart uploads require S3-compatible storage"),{statusCode:503});
+  const result=await client.send(new ListPartsCommand({Bucket:env.S3_BUCKET!,Key:key,UploadId:uploadId,MaxParts:10000}));
+  return (result.Parts||[]).flatMap(part=>part.PartNumber&&part.ETag?[{partNumber:part.PartNumber,etag:part.ETag,size:Number(part.Size||0)}]:[]);
+}
+
+export async function completeMultipartUpload(key:string,uploadId:string,parts:{partNumber:number;etag:string}[]){
+  if(!client)throw Object.assign(new Error("Multipart uploads require S3-compatible storage"),{statusCode:503});
+  await client.send(new CompleteMultipartUploadCommand({Bucket:env.S3_BUCKET!,Key:key,UploadId:uploadId,MultipartUpload:{Parts:parts.sort((a,b)=>a.partNumber-b.partNumber).map(part=>({PartNumber:part.partNumber,ETag:part.etag}))}}));
+}
+
+export async function abortMultipartUpload(key:string,uploadId:string){
+  if(client)await client.send(new AbortMultipartUploadCommand({Bucket:env.S3_BUCKET!,Key:key,UploadId:uploadId}));
 }
 
 export async function inspectObject(key:string){

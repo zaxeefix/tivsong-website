@@ -1,7 +1,10 @@
 const apiBase = (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api")
   .replace(/\/$/, "");
 const isDevelopment=process.env.NODE_ENV==="development";
-const storageOrigin=(()=>{try{return process.env.S3_ENDPOINT?new URL(process.env.S3_ENDPOINT).origin:""}catch{return ""}})();
+const storageSources=new Set(["https://*.backblazeb2.com"]);
+for(const value of [process.env.NEXT_PUBLIC_STORAGE_ORIGIN,process.env.S3_ENDPOINT]){
+  try{if(value)storageSources.add(new URL(value).origin)}catch{/* Invalid optional origins are ignored; the API validates its own storage endpoint. */}
+}
 const contentSecurityPolicy=[
   "default-src 'self'",
   "base-uri 'self'",
@@ -14,7 +17,7 @@ const contentSecurityPolicy=[
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' https: data: blob:",
   "media-src 'self' https: blob:",
-  `connect-src 'self'${storageOrigin?` ${storageOrigin}`:""}`,
+  `connect-src 'self' ${[...storageSources].join(" ")}`,
   "font-src 'self' data:",
   ...(!isDevelopment?["upgrade-insecure-requests"]:[])
 ].join("; ");
@@ -29,7 +32,7 @@ const nextConfig = {
   distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
   async redirects() {
     return [
-      { source: "/governors", destination: "/governors.html", permanent: false },
+      { source: "/governors.html", destination: "/governors", permanent: true },
       { source: "/tor-tiv.html", destination: "/kings", permanent: true },
     ];
   },

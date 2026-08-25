@@ -3,7 +3,7 @@
 import {FormEvent,useCallback,useEffect,useState} from "react";
 import styles from "./admin.module.css";
 
-type Module="settings"|"hero"|"news"|"pages"|"comments"|"media"|"analytics"|"audit"|"search"|"email"|"backup";
+type Module="settings"|"hero"|"news"|"pages"|"comments"|"media"|"uploads"|"analytics"|"audit"|"search"|"email"|"backup";
 type CmsEntry={id:string;kind:string;slug:string;title:string;subtitle:string|null;excerpt:string|null;body:string|null;status:string;featured:boolean;pinned:boolean;sortOrder:number;publishAt:string|null;imageUrl:string|null;videoUrl:string|null;buttonText:string|null;buttonUrl:string|null;updatedAt:string};
 type CommentItem={id:string;body:string;status:string;targetType:string;targetId:string;pinned:boolean;likeCount:number;reportCount:number;createdAt:string};
 type MediaItem={id:string;name:string;folder:string;kind:string;mimeType:string;url:string;sizeBytes:string;altText:string|null;createdAt:string};
@@ -40,6 +40,7 @@ export default function CmsPanel({module,isSuperAdmin}:{module:Module;isSuperAdm
   if(module==="hero"||module==="news"||module==="pages")return <ContentPanel module={module}/>;
   if(module==="comments")return <CommentsPanel/>;
   if(module==="media")return <MediaPanel/>;
+  if(module==="uploads")return <ReadOnlyPanel title="Video upload reconciliation" endpoint="/admin/upload-reconciliation"/>;
   if(module==="analytics")return <ReadOnlyPanel title="Analytics dashboard" endpoint="/admin/analytics"/>;
   if(module==="audit")return <AuditPanel/>;
   if(module==="search")return <SearchPanel/>;

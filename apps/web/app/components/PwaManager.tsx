@@ -9,8 +9,11 @@ export default function PwaManager(){
   const [update,setUpdate]=useState<ServiceWorker|null>(null);
   const [installPrompt,setInstallPrompt]=useState<InstallPrompt|null>(null);
   const [offline,setOffline]=useState(false);
+  const [dismissed,setDismissed]=useState(true);
 
   useEffect(()=>{
+    const until=Number(localStorage.getItem("tiv-pwa-dismissed-until")||0);
+    setDismissed(until>Date.now());
     if(process.env.NODE_ENV!=="production")return;
     if(!("serviceWorker" in navigator))return;
     setOffline(!navigator.onLine);
@@ -45,8 +48,10 @@ export default function PwaManager(){
     await installPrompt.userChoice;
     setInstallPrompt(null);
   };
-  if(!update&&!offline&&!installPrompt)return null;
+  const dismiss=()=>{localStorage.setItem("tiv-pwa-dismissed-until",String(Date.now()+7*24*60*60*1000));setDismissed(true)};
+  if(dismissed||(!update&&!offline&&!installPrompt))return null;
   return <aside className={styles.notice} role="status" aria-live="polite">
+    <button className={styles.dismiss} type="button" onClick={dismiss} aria-label="Dismiss this message for seven days">×</button>
     <img src="/assets/tiv-song-logo.jpeg" alt="" width="42" height="42"/>
     <div><strong>{update?"A new version of Tiv Songs is available.":offline?"You are offline.":"Install Tiv Songs"}</strong><span>{offline?"Saved pages remain available while your connection recovers.":update?"Update safely without losing your session.":"Add the music and heritage archive to your device."}</span></div>
     {update&&<button onClick={()=>update.postMessage({type:"SKIP_WAITING"})}>Update Now</button>}
