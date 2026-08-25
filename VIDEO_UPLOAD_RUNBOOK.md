@@ -18,7 +18,22 @@ Finalisation is idempotent after object completion. Each part is retried indepen
 
 Configure the media bucket to allow the production and preview web origins to perform `PUT` requests. Allow the `Content-Type` request header and expose `ETag`. Do not make the bucket public and do not put application keys in Vercel.
 
-The Vercel build environment must also contain `S3_ENDPOINT` so the generated Content Security Policy permits direct connections to that exact origin. Render retains `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, and `S3_SECRET_ACCESS_KEY` for signing and verification.
+The web CSP permits Backblaze B2 S3 endpoints. For another S3-compatible provider, set `NEXT_PUBLIC_STORAGE_ORIGIN` in Vercel to the origin only (for example `https://s3.example.com`) and redeploy. Never put application keys in Vercel. Render retains `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, and `S3_SECRET_ACCESS_KEY` for signing and verification.
+
+Backblaze bucket CORS rule (replace the origins with the deployed Vercel domains):
+
+```json
+[
+  {
+    "corsRuleName": "tiv-songs-web-upload",
+    "allowedOrigins": ["https://tivsong-website-web.vercel.app"],
+    "allowedHeaders": ["*"],
+    "allowedOperations": ["s3_put"],
+    "exposeHeaders": ["ETag"],
+    "maxAgeSeconds": 3600
+  }
+]
+```
 
 ## Safe reconciliation
 
