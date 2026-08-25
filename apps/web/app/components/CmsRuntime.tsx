@@ -21,10 +21,11 @@ export default function CmsRuntime(){
       setMaintenance(settings.system.maintenanceMode);
     };
     void apply();
-    const events=new EventSource("/api/cms/events",{withCredentials:true});
-    events.addEventListener("settings.updated",()=>void apply());
-    events.addEventListener("content.updated",()=>window.dispatchEvent(new CustomEvent("cms:content-updated")));
-    return()=>{alive=false;events.close()};
+    const refresh=()=>{void apply();window.dispatchEvent(new CustomEvent("cms:content-updated"))};
+    const timer=window.setInterval(refresh,60_000);
+    const visible=()=>{if(document.visibilityState==="visible")refresh()};
+    document.addEventListener("visibilitychange",visible);
+    return()=>{alive=false;window.clearInterval(timer);document.removeEventListener("visibilitychange",visible)};
   },[]);
   if(!maintenance)return null;
   return <div role="alert" style={{position:"fixed",inset:0,zIndex:10000,display:"grid",placeItems:"center",padding:24,background:"var(--cms-secondary,#26003f)",color:"#fff",textAlign:"center"}}><div><img src="/assets/tiv-song-logo.jpeg" alt="" width="84" height="84" style={{borderRadius:"50%"}}/><h1>We’ll be back shortly</h1><p>Tiv Songs is undergoing scheduled maintenance.</p></div></div>;

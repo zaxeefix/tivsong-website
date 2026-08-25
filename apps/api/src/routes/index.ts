@@ -425,7 +425,7 @@ api.get("/songs", async (req, res) => {
   const [items, total] = await prisma.$transaction([
     prisma.song.findMany({
       where: {status: "PUBLISHED"},
-      include: {artist: true, album: true, genre: true, category:true},
+      include: {artist: true,contributor:{select:{username:true,displayName:true,avatarUrl:true}},album: true, genre: true, category:true},
       orderBy: {publishedAt: "desc"},
       skip: (page - 1) * take,
       take
@@ -439,7 +439,7 @@ api.get("/videos",async(req,res)=>{
   const take=Math.min(Math.max(Number(req.query.limit)||12,1),50);
   const items=await prisma.video.findMany({
     where:{status:"PUBLISHED"},
-    include:{artist:true,category:true},
+    include:{artist:true,contributor:{select:{username:true,displayName:true,avatarUrl:true}},category:true},
     orderBy:{updatedAt:"desc"},
     take
   });
@@ -478,12 +478,12 @@ api.get("/community",async(req,res)=>{
 const publicSlug=(value:string)=>value.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")||"profile";
 api.get("/songs/:slug",async(req,res)=>{
   const slug=z.string().min(1).max(180).parse(req.params.slug);
-  const item=await prisma.song.findFirst({where:{slug,status:"PUBLISHED"},include:{artist:{include:{user:{select:{displayName:true,avatarUrl:true}}}},album:true,genre:true,category:true}});
+  const item=await prisma.song.findFirst({where:{slug,status:"PUBLISHED"},include:{artist:{include:{user:{select:{displayName:true,avatarUrl:true}}}},contributor:{select:{username:true,displayName:true,avatarUrl:true}},album:true,genre:true,category:true}});
   if(!item)return void res.status(404).json({error:"Song not found"});res.setHeader("Cache-Control","public, max-age=60, stale-while-revalidate=300");res.json(jsonSafe(item));
 });
 api.get("/videos/:slug",async(req,res)=>{
   const slug=z.string().min(1).max(180).parse(req.params.slug);
-  const item=await prisma.video.findFirst({where:{slug,status:"PUBLISHED"},include:{artist:{include:{user:{select:{displayName:true,avatarUrl:true}}}},category:true}});
+  const item=await prisma.video.findFirst({where:{slug,status:"PUBLISHED"},include:{artist:{include:{user:{select:{displayName:true,avatarUrl:true}}}},contributor:{select:{username:true,displayName:true,avatarUrl:true}},category:true}});
   if(!item)return void res.status(404).json({error:"Video not found"});res.setHeader("Cache-Control","public, max-age=60, stale-while-revalidate=300");res.json(jsonSafe(item));
 });
 api.get("/artists/:slug",async(req,res)=>{
